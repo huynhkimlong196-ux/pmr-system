@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Management Report</title>
+<style>
+  :root {
+    --navy: #0D1B2A;
+    --steel: #1B3A5C;
+    --accent: #2E86AB;
+    --gold: #E8B84B;
+    --light-bg: #F5F7FA;
+    --border: #D0D8E4;
+    --text: #1A2433;
+    --muted: #6B7A8D;
+    --white: #FFFFFF;
+    --green: #1B7A4A;
+    --red: #C0392B;
+    --row-alt: #EEF3F8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--light-bg);
+    color: var(--text);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .app-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--steel) 100%);
+    color: var(--white);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 3px solid var(--gold);
+  }
+  .app-header .logo {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--white);
+  }
+  .app-header .logo span { color: var(--gold); }
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .tab-btn {
+    padding: 7px 20px;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.75);
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn.active {
+    background: var(--white);
+    color: var(--navy);
+  }
+  .tab-btn:not(.active):hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+  /* PANELS */
+  .panel { display: none; padding: 24px 28px; }
+  .panel.active { display: block; }
+
+  /* ── PMR REPORT ── */
+  .pmr-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(13,27,42,0.08);
+  }
+
+  .pmr-title-bar {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    border-bottom: 3px solid var(--gold);
+  }
+
+  .pmr-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .pmr-meta-left, .pmr-meta-right {
+    padding: 12px 20px;
+  }
+  .pmr-meta-right { border-left: 1px solid var(--border); }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 7px;
+  }
+  .meta-row:last-child { margin-bottom: 0; }
+  .meta-label {
+    color: var(--muted);
+    font-weight: 600;
+    min-width: 100px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .meta-value {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .meta-value.highlight { color: var(--accent); font-size: 14px; }
+
+  select.project-select {
+    border: 1.5px solid var(--accent);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    min-width: 220px;
+  }
+  select.project-select:focus { border-color: var(--gold); }
+
+  /* NOTE ROW */
+  .pmr-note {
+    padding: 6px 20px;
+    background: #FFF8E7;
+    font-size: 12px;
+    color: #7A6020;
+    border-bottom: 1px solid #F0DFA0;
+    font-style: italic;
+  }
+
+  /* SECTION TABLE */
+  .pmr-section {
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    background: var(--navy);
+    color: var(--white);
+    padding: 8px 20px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .section-num {
+    background: var(--gold);
+    color: var(--navy);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-right: 12px;
+    letter-spacing: 0;
+  }
+
+  .pmr-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .pmr-table td {
+    padding: 7px 20px;
+    border-bottom: 1px solid #EEF1F5;
+    vertical-align: middle;
+  }
+  .pmr-table tr:last-child td { border-bottom: none; }
+  .pmr-table tr:nth-child(even) td { background: var(--row-alt); }
+
+  .td-label { color: var(--text); width: 52%; }
+  .td-label.sub { padding-left: 36px; color: var(--muted); }
+  .td-value {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--navy);
+  }
+  .td-pct {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+    width: 90px;
+    font-variant-numeric: tabular-nums;
+  }
+  .td-date-val {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .td-input-cell { width: 28%; }
+  .td-input-cell input {
+    width: 100%;
+    text-align: right;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    background: #FAFBFD;
+    outline: none;
+    min-width: 90px;
+  }
+  .td-input-cell input:focus { border-color: var(--accent); background: #fff; }
+  .td-value-display {
+    display: block;
+    text-align: right;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+    padding: 5px 0;
+  }
+
+  .row-total td {
+    background: #EAF2FF !important;
+    font-weight: 700;
+    color: var(--navy);
+    border-top: 2px solid var(--accent);
+  }
+  .row-balance td {
+    background: #E8F5EE !important;
+    font-weight: 700;
+    color: var(--green);
+    border-top: 2px solid var(--green);
+  }
+  .row-balance.negative td { background: #FEF0EF !important; color: var(--red) !important; border-top-color: var(--red) !important; }
+  .row-result td {
+    background: #FFF8E7 !important;
+    font-weight: 700;
+    color: var(--gold);
+    border-top: 2px solid var(--gold);
+    color: #7A6020;
+  }
+
+  /* ── PROJECT LIST ── */
+  .pl-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .pl-toolbar h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--navy);
+    flex: 1;
+  }
+  .btn {
+    padding: 7px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1e6b8a; }
+  .btn-danger { background: #fff; color: var(--red); border: 1.5px solid var(--red); }
+  .btn-danger:hover { background: var(--red); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #145c38; }
+  .btn-send { background: linear-gradient(135deg,#1B7A4A,#27ae60); color:#fff; font-weight:700; box-shadow:0 2px 8px rgba(27,122,74,0.35); }
+  .btn-send:hover { background: linear-gradient(135deg,#145c38,#1e8449); }
+  .btn-send-all { background: linear-gradient(135deg,#E8B84B,#d4a017); color:#0D1B2A; font-weight:700; box-shadow:0 2px 8px rgba(232,184,75,0.35); }
+  .btn-send-all:hover { background: linear-gradient(135deg,#d4a017,#b8860b); }
+  #ejs-config-card .email-compose-header { background: linear-gradient(135deg,#1B3A5C,#2E86AB); }
+  .btn-outline { background: #fff; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn-outline:hover { background: var(--accent); color: #fff; }
+
+  .pl-table-wrap {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.06);
+  }
+  table.pl-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+  .pl-table th {
+    background: var(--navy);
+    color: var(--white);
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .pl-table th:first-child { width: 36px; text-align: center; }
+  .pl-table td {
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .pl-table tr:last-child td { border-bottom: none; }
+  .pl-table tr:nth-child(even) td { background: var(--row-alt); }
+  .pl-table tr:hover td { background: #DDE8F5; }
+
+  .pl-table td input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+  }
+  .pl-table td input:focus {
+    background: #EAF4FF;
+    border-bottom: 2px solid var(--accent);
+  }
+  .pl-table .td-center { text-align: center; padding: 8px 4px; }
+  .pl-table .td-del {
+    text-align: center;
+    padding: 4px;
+    width: 36px;
+  }
+  .del-row-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.12s;
+  }
+  .del-row-btn:hover { background: var(--red); color: #fff; }
+
+  .pl-footer { padding: 12px 16px; color: var(--muted); font-size: 12px; }
+
+  /* IMPORT PANEL */
+  .import-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .import-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    box-shadow: 0 1px 4px rgba(13,27,42,0.05);
+  }
+  .import-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .import-card p { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .import-drop {
+    border: 2px dashed var(--border);
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--light-bg);
+  }
+  .import-drop:hover, .import-drop.dragover {
+    border-color: var(--accent);
+    background: #EAF2FF;
+  }
+  .import-drop .drop-icon { font-size: 28px; margin-bottom: 6px; }
+  .import-drop p { color: var(--muted); font-size: 12px; margin-bottom: 0; }
+  .import-drop input[type=file] { display: none; }
+  .import-status {
+    margin-top: 8px;
+    font-size: 12px;
+    min-height: 18px;
+  }
+  .status-ok { color: var(--green); font-weight: 600; }
+  .status-err { color: var(--red); }
+
+  /* ── EMAIL PANEL ── */
+  .email-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  .email-sidebar {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.06);
+  }
+  .email-sidebar-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sel-all-btn {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .sel-all-btn:hover { background: rgba(255,255,255,0.28); }
+  .proj-checklist {
+    max-height: 420px;
+    overflow-y: auto;
+  }
+  .proj-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+    user-select: none;
+  }
+  .proj-check-item:last-child { border-bottom: none; }
+  .proj-check-item:hover { background: var(--row-alt); }
+  .proj-check-item.selected { background: #EAF2FF; }
+  .proj-check-item input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+  .proj-check-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .proj-check-code { font-size: 11px; color: var(--muted); }
+  .proj-check-emails { font-size: 10px; color: var(--accent); margin-top: 1px; }
+  .proj-check-nowrap { font-size: 10px; color: var(--red); font-style: italic; }
+
+  .email-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .email-compose {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.06);
+  }
+  .email-compose-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .email-fields { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .email-field { display: flex; align-items: flex-start; gap: 10px; }
+  .email-field label {
+    min-width: 72px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding-top: 7px;
+  }
+  .email-field input, .email-field textarea {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    color: var(--text);
+    background: #FAFBFD;
+    outline: none;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .email-field input:focus, .email-field textarea:focus { border-color: var(--accent); background: #fff; }
+  .email-field textarea { min-height: 60px; }
+  .email-body-wrap { padding: 0 16px 14px; }
+  .email-body-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  .email-body-editor {
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    min-height: 220px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    outline: none;
+    background: #FAFBFD;
+    overflow-y: auto;
+  }
+  .email-body-editor:focus { border-color: var(--accent); background: #fff; }
+
+  .email-actions {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .email-sel-count {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .email-sel-count strong { color: var(--navy); }
+
+  .btn-gmail { background: #EA4335; color: #fff; }
+  .btn-gmail:hover { background: #c0392b; }
+  .btn-mailto { background: var(--steel); color: #fff; }
+  .btn-mailto:hover { background: var(--navy); }
+
+  .email-preview-box {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.06);
+  }
+  .email-preview-header {
+    background: #F0F4FA;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .preview-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 10px;
+  }
+  .email-queue {
+    max-height: 260px;
+    overflow-y: auto;
+  }
+  .queue-item {
+    padding: 10px 14px;
+    border-bottom: 1px solid #EEF1F5;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .queue-item:last-child { border-bottom: none; }
+  .queue-item-num {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .queue-item-info { flex: 1; }
+  .queue-item-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+  .queue-item-to { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .queue-item-to span { color: var(--accent); }
+  .queue-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 12px; }
+
+  @media (max-width: 900px) {
+    .email-layout { grid-template-columns: 1fr; }
+  }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #145c38; }
+  #merge-meta span { color: var(--muted); font-size:11px; }
+  #merge-meta strong { color: var(--navy); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    border-left: 4px solid var(--gold);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all 0.25s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 700px) {
+    .import-grid { grid-template-columns: 1fr; }
+    .pmr-meta { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">PM<span>R</span> System</div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('pmr')">PMR Report</button>
+    <button class="tab-btn" onclick="switchTab('pl')">Project List</button>
+    <button class="tab-btn" onclick="switchTab('import')">Import Data</button>
+    <button class="tab-btn" onclick="switchTab('email')">✉ Send Report</button>
+  </div>
+</div>
+
+<!-- ══════════════ PMR REPORT ══════════════ -->
+<div id="tab-pmr" class="panel active">
+  <div class="pmr-wrap">
+    <div class="pmr-title-bar">PROJECT MANAGEMENT REPORT</div>
+
+    <!-- Meta header -->
+    <div class="pmr-meta">
+      <div class="pmr-meta-left">
+        <div class="meta-row">
+          <span class="meta-label">Project</span>
+          <select class="project-select" id="projectSelect" onchange="onProjectChange()">
+            <option value="">— Select Project —</option>
+          </select>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Code</span>
+          <span class="meta-value highlight" id="e4-code">—</span>
+        </div>
+      </div>
+      <div class="pmr-meta-right">
+        <div class="meta-row">
+          <span class="meta-label">Report Date</span>
+          <span class="meta-value" id="report-date"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pmr-note" id="pmr-note" style="display:none">Gồm tạm ứng thép</div>
+
+    <!-- I. PROJECT SCHEDULE -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">I</span>PROJECT SCHEDULE</div>
+      <table class="pmr-table">
+        <tr>
+          <td class="td-label sub">Starting date</td>
+          <td class="td-value td-date-val td-input-cell" colspan="2"><span id="e9-start">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub" style="padding-left:20px;font-weight:600">Completion date:</td>
+          <td colspan="2"></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">Contract</td>
+          <td class="td-value td-date-val td-input-cell" colspan="2"><span id="e11-contract">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">Extension as appendix</td>
+          <td class="td-value td-date-val td-input-cell" colspan="2"><span id="e12-extension">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">Contract duration</td>
+          <td class="td-value" colspan="2"><span id="f13-dur">—</span> months</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">Actual duration</td>
+          <td class="td-value"><span id="f14-actual">—</span> months</td>
+          <td class="td-pct"><span id="g14-pct">—</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- II. CONTRACT AMOUNT -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">II</span>CONTRACT AMOUNT</div>
+      <table class="pmr-table">
+        <tr style="background:#EEF3F8;">
+          <td class="td-label" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Descriptions</td>
+          <td class="td-value" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:right;">Amount (Bil VND)</td>
+          <td class="td-pct" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">% Contract</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">1. Contract value (excl. VAT)</td>
+          <td class="td-value">
+            <span id="f17" class="td-value-display">—</span>
+          </td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">2. Appendix value (excl. VAT)</td>
+          <td class="td-value"><span id="f18" class="td-value-display">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">3. Un-approved Additional Value (excl. VAT)</td>
+          <td class="td-value"><span id="f19" class="td-value-display">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr class="row-total">
+          <td class="td-label sub">4. Total contract amount (excl. VAT)</td>
+          <td class="td-value"><span id="f20">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">5. VAT</td>
+          <td class="td-value"><span id="f21" class="td-value-display">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr class="row-total">
+          <td class="td-label sub">6. Total contract amount (incl. VAT) (4+5)</td>
+          <td class="td-value"><span id="f22">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- III. WORKDONE -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">III</span>WORKDONE</div>
+      <table class="pmr-table">
+        <tr style="background:#EEF3F8;">
+          <td class="td-label" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Descriptions</td>
+          <td class="td-value" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:right;">Amount (Bil VND)</td>
+          <td class="td-pct" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">% Contract</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">1. Approved workdone</td>
+          <td class="td-value"><span id="f25" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g25">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">2. Un-approved workdone</td>
+          <td class="td-value"><span id="f26" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g26">—</span></td>
+        </tr>
+        <tr class="row-total">
+          <td class="td-label sub">Total Workdone: (1+2)</td>
+          <td class="td-value"><span id="f27">—</span></td>
+          <td class="td-pct"><span id="g27">—</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- IV. CASH FLOW -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">IV</span>CASH FLOW</div>
+      <table class="pmr-table">
+        <tr style="background:#EEF3F8;">
+          <td class="td-label" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Descriptions</td>
+          <td class="td-value" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:right;">Amount (Bil VND)</td>
+          <td class="td-pct" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">% Contract</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">1. Total Cash-in</td>
+          <td class="td-value"><span id="f30" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g30">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">2. Total Cash-out</td>
+          <td class="td-value"><span id="f31" class="td-value-display">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr class="row-balance" id="row-balance">
+          <td class="td-label sub">CASH BALANCE (1-2)</td>
+          <td class="td-value"><span id="f32">—</span></td>
+          <td class="td-pct"><span id="g32">—</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- V. RECEIVABLE -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">V</span>RECEIVABLE</div>
+      <table class="pmr-table">
+        <tr style="background:#EEF3F8;">
+          <td class="td-label" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Descriptions</td>
+          <td class="td-value" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:right;">Amount (Bil VND)</td>
+          <td class="td-pct" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">% Contract</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">1. Receivable</td>
+          <td class="td-value"><span id="f35" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g35">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">2. Received</td>
+          <td class="td-value"><span id="f36" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g36">—</span></td>
+        </tr>
+        <tr class="row-balance" id="row-remain">
+          <td class="td-label sub">REMAIN RECEIVABLE: (1-2)</td>
+          <td class="td-value"><span id="f37">—</span></td>
+          <td class="td-pct"><span id="g37">—</span></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- VI. REVENUE vs EXPENSES -->
+    <div class="pmr-section">
+      <div class="section-header"><span class="section-num">VI</span>REVENUE vs EXPENSES</div>
+      <table class="pmr-table">
+        <tr style="background:#EEF3F8;">
+          <td class="td-label" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">Descriptions</td>
+          <td class="td-value" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;text-align:right;">Amount (Bil VND)</td>
+          <td class="td-pct" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">% Contract</td>
+        </tr>
+        <tr>
+          <td class="td-label sub">1. Revenue</td>
+          <td class="td-value"><span id="f40" class="td-value-display">—</span></td>
+          <td class="td-pct"><span id="g40">—</span></td>
+        </tr>
+        <tr>
+          <td class="td-label sub">2. Expenses</td>
+          <td class="td-value"><span id="f41" class="td-value-display">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+        <tr class="row-result" id="row-rev-exp">
+          <td class="td-label sub">Revenue - Expenses</td>
+          <td class="td-value"><span id="f42">—</span></td>
+          <td class="td-pct"></td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ PROJECT LIST ══════════════ -->
+<div id="tab-pl" class="panel">
+  <div class="pl-toolbar">
+    <h2>Project List</h2>
+    <button class="btn btn-primary" onclick="addProjectRow()">+ Add Row</button>
+    <button class="btn btn-success" onclick="saveProjectList()">💾 Save</button>
+    <button class="btn btn-outline" onclick="exportProjectList()">⬇ Export CSV</button>
+  </div>
+  <div class="pl-table-wrap">
+    <div style="overflow-x:auto">
+      <table class="pl-table" id="plTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Project Name (Col A)</th>
+            <th>Code (Col B)</th>
+            <th>Starting Date (Col C)</th>
+            <th>Completion Date – Contract (Col D)</th>
+            <th>Completion Date – Appendix (Col E)</th>
+            <th>Mail PD (Col F)</th>
+            <th>Mail BOD (Col G)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="plBody"></tbody>
+      </table>
+    </div>
+    <div class="pl-footer" id="plFooter">0 projects</div>
+  </div>
+</div>
+
+<!-- ══════════════ IMPORT DATA ══════════════ -->
+<div id="tab-import" class="panel">
+  <h2 style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:16px">Import Data Sources</h2>
+  <div class="import-grid">
+
+    <div class="import-card">
+      <h3>📋 Project List (PL)</h3>
+      <p>Excel file with "Project List" sheet. Columns: A=Name, B=Code, C=Start, D=Contract End, E=Appendix End.</p>
+      <div class="import-drop" id="drop-pl" onclick="document.getElementById('file-pl').click()" ondragover="dragover(event,'drop-pl')" ondragleave="dragleave('drop-pl')" ondrop="dropFile(event,'pl')">
+        <div class="drop-icon">📁</div>
+        <p>Click or drag & drop PL Excel file</p>
+        <input type="file" id="file-pl" accept=".xlsx,.xls,.csv" onchange="handleFile(event,'pl')">
+      </div>
+      <div class="import-status" id="status-pl"></div>
+    </div>
+
+    <div class="import-card">
+      <h3>💰 Contract / Receivable</h3>
+      <p>File Excel theo template Receivable — sheet <strong>"Receivable"</strong>, header dòng 5, dữ liệu từ dòng 6. Cột A = Project, D = Contract excl.VAT, E = Contract incl.VAT, F = Workdone excl.VAT, L = Payment Request, M = Received.</p>
+      <div class="import-drop" id="drop-recv" onclick="document.getElementById('file-recv').click()" ondragover="dragover(event,'drop-recv')" ondragleave="dragleave('drop-recv')" ondrop="dropFile(event,'recv')">
+        <div class="drop-icon">📁</div>
+        <p>Click or drag & drop Receivable file</p>
+        <input type="file" id="file-recv" accept=".xlsx,.xls,.csv" onchange="handleFile(event,'recv')">
+      </div>
+      <div class="import-status" id="status-recv"></div>
+    </div>
+
+    <div class="import-card">
+      <h3>🏦 Cash Flow (CF)</h3>
+      <p>File Excel theo template CF — header dòng 6, dữ liệu từ dòng 7. Cột O = Bộ phận (3 ký tự đầu = mã dự án), I = Phát sinh nợ → <em>F30</em>, J = Phát sinh có → <em>F31</em>. Cột F chứa "hoàn ứng/hoàn tạm ứng" → giá trị cột I đổi âm.</p>
+      <div class="import-drop" id="drop-cf" onclick="document.getElementById('file-cf').click()" ondragover="dragover(event,'drop-cf')" ondragleave="dragleave('drop-cf')" ondrop="dropFile(event,'cf')">
+        <div class="drop-icon">📁</div>
+        <p>Click or drag & drop Cash Flow file</p>
+        <input type="file" id="file-cf" accept=".xlsx,.xls,.csv" onchange="handleFile(event,'cf')">
+      </div>
+      <div class="import-status" id="status-cf"></div>
+    </div>
+
+    <div class="import-card">
+      <h3>📈 Revenue</h3>
+      <p>File Excel theo template Revenue — header dòng 6, dữ liệu từ dòng 9 (dòng 7-8 là tổng). Cột M = <strong>Vụ việc</strong> (mã dự án), J = Phát sinh có → SUMIF → <em>F40</em>.</p>
+      <div class="import-drop" id="drop-rev" onclick="document.getElementById('file-rev').click()" ondragover="dragover(event,'drop-rev')" ondragleave="dragleave('drop-rev')" ondrop="dropFile(event,'rev')">
+        <div class="drop-icon">📁</div>
+        <p>Click or drag & drop Revenue file</p>
+        <input type="file" id="file-rev" accept=".xlsx,.xls,.csv" onchange="handleFile(event,'rev')">
+      </div>
+      <div class="import-status" id="status-rev"></div>
+    </div>
+
+    <div class="import-card">
+      <h3>💸 Expenses</h3>
+      <p>File Excel theo template Expenses — header dòng 6, dữ liệu từ dòng 9. Cột O = <strong>Bộ phận</strong> (3 ký tự đầu = mã dự án), I = Phát sinh nợ, J = Phát sinh có → SUMIF (I − J) → <em>F41</em>.</p>
+      <div class="import-drop" id="drop-exp" onclick="document.getElementById('file-exp').click()" ondragover="dragover(event,'drop-exp')" ondragleave="dragleave('drop-exp')" ondrop="dropFile(event,'exp')">
+        <div class="drop-icon">📁</div>
+        <p>Click or drag & drop Expenses file</p>
+        <input type="file" id="file-exp" accept=".xlsx,.xls,.csv" onchange="handleFile(event,'exp')">
+      </div>
+      <div class="import-status" id="status-exp"></div>
+    </div>
+
+  </div>
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:6px;padding:16px;">
+    <h3 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px">Import Hướng dẫn nhanh</h3>
+    <ul style="color:var(--muted);font-size:12px;line-height:1.9;padding-left:18px">
+      <li>File Project List (PL): cần có sheet tên "<strong>Project List</strong>", dữ liệu từ dòng 4 (row 4)</li>
+      <li>File Receivable: sheet <strong>"Receivable"</strong>, dòng 5 = header, dữ liệu từ dòng 6 — Cột A = Project Name, D = Contract excl.VAT → <em>F17</em>, E = Contract incl.VAT → <em>F22</em>, F = Workdone excl.VAT → <em>F25</em>, L = Payment Request → <em>F35</em>, M = Received → <em>F36</em> (SUMIF theo tên dự án)</li>
+      <li>File CF (template): header dòng 6, data từ dòng 7 — Cột O = Bộ phận (lấy 3 ký tự đầu làm mã dự án), I = Phát sinh nợ → <em>F30</em>, J = Phát sinh có → <em>F31</em>. Dòng cột F có keyword "hoàn ứng/hoàn tạm ứng/hoàn tiền tạm ứng" → cột I chuyển thành âm</li>
+      <li>File Revenue (template): header dòng 6, data từ dòng 9 — Cột M = Vụ việc (mã dự án, full code), J = Phát sinh có → SUMIF → <em>F40</em></li>
+      <li>File Expenses (template): header dòng 6, data từ dòng 9 — Cột O = Bộ phận (lấy 3 ký tự đầu làm mã dự án), I = Phát sinh nợ, J = Phát sinh có → SUMIF (I − J) → <em>F41</em></li>
+      <li>Các file CSV: dùng dấu phẩy (,) làm dấu ngăn cách</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════ SEND REPORT ══════════════ -->
+<div id="tab-email" class="panel">
+  <div class="email-layout">
+
+    <!-- LEFT: project checklist -->
+    <div class="email-sidebar">
+      <div class="email-sidebar-header">
+        📋 Chọn dự án
+        <button class="sel-all-btn" onclick="toggleSelectAll()">Chọn tất cả</button>
+      </div>
+      <div class="proj-checklist" id="emailProjList"></div>
+    </div>
+
+    <!-- RIGHT: settings + mail-merge navigator -->
+    <div class="email-main">
+
+      <!-- SMTP API Config card -->
+      <div class="email-compose" id="ejs-config-card">
+        <div class="email-compose-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>⚙ Cấu hình Email Server (SMTP)</span>
+          <button onclick="toggleEjsConfig()" id="ejs-toggle-btn" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:3px 10px;border-radius:3px;cursor:pointer;font-size:11px;">▲ Thu gọn</button>
+        </div>
+        <div id="ejs-config-body" class="email-fields">
+          <div style="background:#EAF2FF;border:1px solid #B8D4F0;border-radius:4px;padding:10px 14px;font-size:12px;color:#1B3A5C;margin:0 0 4px;">
+            📌 Điền <strong>URL của email server</strong> sau khi deploy lên <strong>Render.com</strong>.
+            Xem hướng dẫn deploy bên dưới. Thông tin được lưu local trên trình duyệt.
+          </div>
+          <div class="email-field">
+            <label>Server URL</label>
+            <input type="text" id="ejs-server-url" placeholder="https://pmr-email-server.onrender.com" oninput="saveEjsConfig()">
+          </div>
+          <div class="email-field">
+            <label>Gửi từ</label>
+            <select id="ejs-sender" style="flex:1;border:1.5px solid var(--border);border-radius:4px;padding:6px 10px;font-size:13px;background:#FAFBFD;outline:none;" onchange="saveEjsConfig()">
+              <option value="quang.dn@handongec.co.kr">quang.dn@handongec.co.kr</option>
+              <option value="long.hk@handongec.co.kr">long.hk@handongec.co.kr</option>
+            </select>
+          </div>
+          <div style="padding:0 0 10px 82px;display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-primary" style="padding:5px 16px;" onclick="testEjsConnection()">🔗 Test kết nối</button>
+            <span id="ejs-status" style="font-size:12px;"></span>
+          </div>
+          <div style="background:#F5F7FA;border:1px solid var(--border);border-radius:4px;padding:10px 14px;font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.8;">
+            <strong style="color:var(--navy);">Hướng dẫn deploy email server lên Render.com (miễn phí):</strong><br>
+            1. Tải file <strong>email-server.zip</strong> từ nút bên dưới<br>
+            2. Đăng ký <a href="https://render.com" target="_blank" style="color:var(--accent)">render.com</a> → New Web Service → Upload code<br>
+            3. Vào <strong>Environment Variables</strong> điền: SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS<br>
+            4. Deploy xong → copy URL dán vào ô Server URL bên trên
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings row -->
+      <div class="email-compose">
+        <div class="email-compose-header">✉ Cài đặt Email</div>
+        <div class="email-fields">
+          <div class="email-field">
+            <label>Gửi cho</label>
+            <div style="flex:1;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <label style="min-width:auto;text-transform:none;font-size:13px;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="chk-bod" checked onchange="updateRecipientPreview()"> BOD
+              </label>
+              <label style="min-width:auto;text-transform:none;font-size:13px;display:flex;align-items:center;gap:5px;cursor:pointer;">
+                <input type="checkbox" id="chk-pd" checked onchange="updateRecipientPreview()"> PD
+              </label>
+              <span style="color:var(--muted);font-size:11px;" id="recipient-preview"></span>
+            </div>
+          </div>
+          <div class="email-field">
+            <label>CC</label>
+            <input type="text" id="email-cc" placeholder="cc@example.com (cách nhau dấu phẩy)">
+          </div>
+          <div class="email-field">
+            <label>Subject</label>
+            <input type="text" id="email-subject" placeholder="[PMR] Project Management Report mm/yyyy">
+          </div>
+          <div class="email-field">
+            <label>Ký tên</label>
+            <input type="text" id="email-signature" value="Finance Department">
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate button -->
+      <div class="email-actions">
+        <button class="btn btn-primary" onclick="generateAllPreviews()">🔄 Tạo tất cả email</button>
+        <span class="email-sel-count" id="sel-count-label"><strong>0</strong> dự án được chọn</span>
+      </div>
+
+      <!-- Mail-merge navigator -->
+      <div class="email-preview-box" id="merge-box" style="display:none;">
+        <div class="email-preview-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            📨 Mail Merge Preview
+            <span class="preview-badge" id="merge-badge">0/0</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-outline" style="padding:3px 10px;font-size:11px;" onclick="mergeNav(-1)">◀ Trước</button>
+            <button class="btn btn-outline" style="padding:3px 10px;font-size:11px;" onclick="mergeNav(1)">Sau ▶</button>
+          </div>
+        </div>
+
+        <!-- Per-email header info -->
+        <div id="merge-meta" style="background:#F5F7FA;border-bottom:1px solid var(--border);padding:10px 16px;font-size:12px;display:flex;gap:24px;flex-wrap:wrap;"></div>
+
+        <!-- Action bar for current email -->
+        <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn btn-send" style="padding:5px 18px;font-size:12px;" onclick="sendCurrentDirect()">
+            ✈ Gửi ngay
+          </button>
+          <button class="btn btn-send-all" style="padding:5px 18px;font-size:12px;" onclick="sendAllDirect()">
+            🚀 Gửi tất cả
+          </button>
+          <div style="width:1px;height:24px;background:var(--border);margin:0 4px;"></div>
+          <button class="btn btn-gmail" style="padding:5px 12px;font-size:11px;" onclick="sendCurrentGmail()">📧 Gmail</button>
+          <button class="btn btn-outline" style="padding:5px 12px;font-size:11px;" onclick="copyCurrentEmail()">📋 Copy</button>
+          <span id="send-status" style="font-size:12px;margin-left:4px;"></span>
+        </div>
+
+        <!-- Preview body -->
+        <div id="merge-preview" style="padding:20px 24px;background:#fff;min-height:300px;font-size:13px;line-height:1.8;overflow-y:auto;max-height:520px;">
+          <em style="color:#aaa">Nhấn "Tạo tất cả email" để xem preview...</em>
+        </div>
+      </div>
+
+      <!-- Empty state queue -->
+      <div class="email-preview-box" id="empty-queue-box">
+        <div class="email-preview-header">📨 Mail Merge Queue <span class="preview-badge" id="queue-badge">0</span></div>
+        <div class="email-queue" id="emailQueue">
+          <div class="queue-empty">Chọn dự án và nhấn "Tạo tất cả email"</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+// ═══════════════════ STATE ═══════════════════
+const state = {
+  projects: [], // [{name, code, startDate, contractEnd, appendixEnd}]
+  importedData: {
+    receivable: {}, // keyed by project name
+    cashflow: {},   // keyed by code prefix (3 chars)
+    revenue: {},    // keyed by project code → {revenue}
+    expense: {},    // keyed by project code prefix (3 chars) → {expenses}
+  }
+};
+
+// ═══════════════════ INIT ═══════════════════
+window.onload = () => {
+  loadFromStorage();
+  renderProjectList();
+  populateDropdown();
+  setReportDate();
+  renderEmailProjList();
+  updateRecipientPreview();
+  initEmailSubject();
+  loadEjsConfig();
+};
+
+function setReportDate() {
+  const d = new Date();
+  document.getElementById('report-date').textContent =
+    d.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'});
+}
+
+// ═══════════════════ TABS ═══════════════════
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ═══════════════════ LOCAL STORAGE ═══════════════════
+function saveToStorage() {
+  localStorage.setItem('pmr_projects', JSON.stringify(state.projects));
+  localStorage.setItem('pmr_importedData', JSON.stringify(state.importedData));
+}
+function loadFromStorage() {
+  try {
+    const p = localStorage.getItem('pmr_projects');
+    if (p) state.projects = JSON.parse(p);
+    const d = localStorage.getItem('pmr_importedData');
+    if (d) state.importedData = Object.assign(state.importedData, JSON.parse(d));
+  } catch(e) {}
+
+  // Default demo data if empty
+  if (state.projects.length === 0) {
+    state.projects = [
+      {name:'Gempark Hai Phong', code:'02900000', startDate:'2024-04-01', contractEnd:'2026-09-30', appendixEnd:''},
+      {name:'Commercial Office & Shop An Giang', code:'06700000', startDate:'2026-01-01', contractEnd:'2026-12-31', appendixEnd:''},
+      {name:'Ton Dong A Office', code:'05600000', startDate:'2024-08-02', contractEnd:'2025-06-30', appendixEnd:'2026-04-30'},
+      {name:'Ben Tre Hospital', code:'06200000', startDate:'2024-12-28', contractEnd:'2026-06-26', appendixEnd:''},
+      {name:'K-Home 166 units', code:'06500000', startDate:'2025-02-18', contractEnd:'2025-12-31', appendixEnd:''},
+      {name:'K-Home 174 units', code:'06900000', startDate:'2025-09-11', contractEnd:'2026-06-30', appendixEnd:''},
+      {name:'K-Home 19 units', code:'06900001', startDate:'2026-01-01', contractEnd:'2026-06-30', appendixEnd:''},
+      {name:'Sycamore B14', code:'06600000', startDate:'2024-03-10', contractEnd:'2027-01-15', appendixEnd:''},
+      {name:'Essensia Parkway - Phu Long', code:'07000000', startDate:'2025-06-14', contractEnd:'2026-01-10', appendixEnd:''},
+      {name:'Essensia Broadway - Phu Long', code:'07500000', startDate:'2026-03-09', contractEnd:'2026-11-04', appendixEnd:''},
+      {name:'Kim Oanh - Phu Hoi', code:'07400000', startDate:'2026-02-03', contractEnd:'2026-12-31', appendixEnd:''},
+      {name:'Sedo Dung Quat factory', code:'07100000', startDate:'2026-01-27', contractEnd:'2026-10-24', appendixEnd:''},
+      {name:'Swanbay Osia', code:'07200000', startDate:'2025-11-10', contractEnd:'2026-08-06', appendixEnd:''},
+      {name:'Star view in Binh Duong', code:'02700000', startDate:'', contractEnd:'', appendixEnd:''},
+      {name:'The 9 Stellars - 26 villas', code:'05400000', startDate:'', contractEnd:'', appendixEnd:''},
+    ];
+  }
+}
+
+// ═══════════════════ PROJECT LIST ═══════════════════
+function renderProjectList() {
+  const tbody = document.getElementById('plBody');
+  tbody.innerHTML = '';
+  state.projects.forEach((p, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-center" style="color:var(--muted);font-size:12px">${i+1}</td>
+      <td><input type="text" value="${esc(p.name)}" oninput="updateProject(${i},'name',this.value)" placeholder="Project name"></td>
+      <td><input type="text" value="${esc(p.code)}" oninput="updateProject(${i},'code',this.value)" placeholder="Code"></td>
+      <td><input type="date" value="${p.startDate||''}" oninput="updateProject(${i},'startDate',this.value)"></td>
+      <td><input type="date" value="${p.contractEnd||''}" oninput="updateProject(${i},'contractEnd',this.value)"></td>
+      <td><input type="date" value="${p.appendixEnd||''}" oninput="updateProject(${i},'appendixEnd',this.value)"></td>
+      <td><input type="email" value="${esc(p.mailPD||'')}" oninput="updateProject(${i},'mailPD',this.value)" placeholder="pd@email.com"></td>
+      <td><input type="email" value="${esc(p.mailBOD||'')}" oninput="updateProject(${i},'mailBOD',this.value)" placeholder="bod@email.com"></td>
+      <td class="td-del"><button class="del-row-btn" onclick="deleteRow(${i})" title="Delete row">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('plFooter').textContent = `${state.projects.length} project(s)`;
+}
+
+function updateProject(i, field, val) {
+  state.projects[i][field] = val;
+  if (field === 'name' || field === 'code') populateDropdown();
+}
+
+function addProjectRow() {
+  state.projects.push({name:'', code:'', startDate:'', contractEnd:'', appendixEnd:'', mailPD:'', mailBOD:''});
+  renderProjectList();
+  populateDropdown();
+}
+
+function deleteRow(i) {
+  if (!confirm('Xóa dòng này?')) return;
+  state.projects.splice(i, 1);
+  renderProjectList();
+  populateDropdown();
+  toast('Đã xóa dòng');
+}
+
+function saveProjectList() {
+  saveToStorage();
+  populateDropdown();
+  renderEmailProjList();
+  toast('Đã lưu Project List ✓');
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;'); }
+
+// ═══════════════════ DROPDOWN & PMR LOGIC ═══════════════════
+function populateDropdown() {
+  const sel = document.getElementById('projectSelect');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select Project —</option>';
+  state.projects.forEach(p => {
+    if (!p.name) return;
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  if (cur) { sel.value = cur; onProjectChange(); }
+}
+
+function onProjectChange() {
+  const name = document.getElementById('projectSelect').value;
+  if (!name) {
+    clearPMR(); return;
+  }
+  const proj = state.projects.find(p => p.name === name);
+  if (!proj) { clearPMR(); return; }
+
+  // E4 - Code
+  document.getElementById('e4-code').textContent = proj.code || '—';
+  document.getElementById('pmr-note').style.display = 'block';
+
+  // E9 - Starting date (Col C)
+  document.getElementById('e9-start').textContent = fmtDate(proj.startDate);
+  // E11 - Contract end (Col D)
+  document.getElementById('e11-contract').textContent = fmtDate(proj.contractEnd);
+  // E12 - Appendix end (Col E)
+  document.getElementById('e12-extension').textContent = proj.appendixEnd ? fmtDate(proj.appendixEnd) : '—';
+
+  // Durations
+  calcSchedule(proj);
+
+  // Pull imported data
+  fillImportedData(proj);
+  recalc();
+}
+
+function calcSchedule(proj) {
+  const start = proj.startDate ? new Date(proj.startDate) : null;
+  const end = proj.appendixEnd ? new Date(proj.appendixEnd) : (proj.contractEnd ? new Date(proj.contractEnd) : null);
+  const contract = proj.contractEnd ? new Date(proj.contractEnd) : null;
+  const today = new Date();
+
+  if (start && end) {
+    const dur = (end - start) / (1000*60*60*24*30);
+    document.getElementById('f13-dur').textContent = dur.toFixed(1);
+  } else {
+    document.getElementById('f13-dur').textContent = '—';
+  }
+  if (start) {
+    const actual = (today - start) / (1000*60*60*24*30);
+    document.getElementById('f14-actual').textContent = actual.toFixed(1);
+    const dur = parseFloat(document.getElementById('f13-dur').textContent);
+    if (dur) document.getElementById('g14-pct').textContent = pct(actual/dur);
+    else document.getElementById('g14-pct').textContent = '—';
+  } else {
+    document.getElementById('f14-actual').textContent = '—';
+    document.getElementById('g14-pct').textContent = '—';
+  }
+}
+
+function fillImportedData(proj) {
+  const name = proj.name;
+  const code = proj.code || '';
+  const prefix = code.substring(0,3);
+
+  // Receivable data — case-insensitive lookup by project name
+  const recvKey = Object.keys(state.importedData.receivable).find(k => k.toLowerCase() === name.toLowerCase()) || name;
+  const recv = state.importedData.receivable[recvKey] || {};
+  setValue('f17', recv.contractExclVAT || '');   // F17 = Contract excl. VAT (col D)
+  setValue('f21', recv.vat || '');               // F21 = VAT = E - D
+  setValue('f25', recv.approvedWorkdone || '');  // F25 = Workdone excl. VAT (col F)
+  setValue('f35', recv.receivable || '');        // F35 = Payment Request (col L)
+  setValue('f36', recv.received || '');          // F36 = Received from client (col M)
+
+  // CF data
+  const cf = state.importedData.cashflow[prefix] || {};
+  setValue('f30', cf.cashIn || '');
+  setValue('f31', cf.cashOut || '');
+
+  // Revenue — keyed by full project code
+  const rev = state.importedData.revenue[code] || {};
+  setValue('f40', rev.revenue || '');
+
+  // Expense — keyed by first 3 chars of project code
+  const exp = state.importedData.expense[prefix] || {};
+  setValue('f41', exp.expenses || '');
+}
+
+function fmtNum(n) {
+  if (isNaN(n) || n === null || n === undefined) return '—';
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// Internal data store for all monetary fields (in Bil VND)
+const pmrData = {
+  f17:0, f18:0, f19:0, f21:0,
+  f25:0, f26:0,
+  f30:0, f31:0,
+  f35:0, f36:0,
+  f40:0, f41:0
+};
+
+function setValue(id, val) {
+  if (!(id in pmrData)) return;
+  if (val === '' || val === null || val === undefined) { pmrData[id] = 0; }
+  else {
+    const num = parseFloat(val) || 0;
+    // If raw VND (>= 1,000,000), convert to Bil; otherwise already in Bil
+    pmrData[id] = Math.abs(num) >= 1e6 ? num / 1e9 : num;
+  }
+  const el = document.getElementById(id);
+  if (el) el.textContent = pmrData[id] ? fmtNum(pmrData[id]) : '—';
+}
+
+function clearPMR() {
+  document.getElementById('e4-code').textContent = '—';
+  document.getElementById('e9-start').textContent = '—';
+  document.getElementById('e11-contract').textContent = '—';
+  document.getElementById('e12-extension').textContent = '—';
+  document.getElementById('f13-dur').textContent = '—';
+  document.getElementById('f14-actual').textContent = '—';
+  document.getElementById('g14-pct').textContent = '—';
+  document.getElementById('pmr-note').style.display = 'none';
+  ['f17','f18','f19','f21','f25','f26','f30','f31','f35','f36','f40','f41'].forEach(id => {
+    pmrData[id] = 0;
+    const el = document.getElementById(id);
+    if (el) el.textContent = '—';
+  });
+  recalc();
+}
+
+// ═══════════════════ RECALC ═══════════════════
+function recalc() {
+  const v = id => (id in pmrData) ? pmrData[id] : 0;
+
+  const f17=v('f17'), f18=v('f18'), f19=v('f19');
+  const f20 = f17+f18+f19;
+  const f21=v('f21');
+  const f22 = f20+f21;
+
+  setText('f20', bil(f20));
+  setText('f22', bil(f22));
+
+  const f25=v('f25'), f26=v('f26');
+  const f27=f25+f26;
+  setText('f27', bil(f27));
+  setText('g25', f20 ? pct(f25/f20*(f25>0?1:-1)) : '—');
+  setText('g26', f20 ? pct(f26/f20*(f26>0?1:-1)) : '—');
+  setText('g27', f20 ? pct(f27/f20*(f27>0?1:-1)) : '—');
+
+  const f30=v('f30'), f31=v('f31');
+  const f32=f30-f31;
+  setText('f32', bil(f32));
+  setText('g30', f22 ? pct(f30/f22*(f30>0?1:-1)) : '—');
+  setText('g32', f22 ? pct(f32/f22*(f32>0?1:-1)) : '—');
+  document.getElementById('row-balance').className = 'row-balance' + (f32 < 0 ? ' negative' : '');
+
+  const f35=v('f35'), f36=v('f36');
+  const f37=f35-f36;
+  setText('f37', bil(f37));
+  setText('g35', f22 ? pct(f35/f22*(f35>0?1:-1)) : '—');
+  setText('g36', f22 ? pct(f36/f22*(f36>0?1:-1)) : '—');
+  setText('g37', f22 ? pct(f37/f22*(f37>0?1:-1)) : '—');
+  document.getElementById('row-remain').className = 'row-balance' + (f37 < 0 ? ' negative' : '');
+
+  const f40=v('f40'), f41=v('f41');
+  const f42=f40-f41;
+  setText('f42', bil(f42));
+  setText('g40', f20 ? pct(f40/f20*(f40>0?1:-1)) : '—');
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ═══════════════════ FORMAT HELPERS ═══════════════════
+// All monetary values stored & entered in Bil VND (tỷ VND)
+function bil(n) {
+  if (isNaN(n) || n === null || n === undefined) return '—';
+  if (n === 0) return '0.00';
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function pct(n) {
+  if (isNaN(n)) return '—';
+  return (n*100).toFixed(1) + '%';
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  try {
+    const d = new Date(s);
+    return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+  } catch(e) { return s; }
+}
+
+// ═══════════════════ IMPORT ═══════════════════
+function dragover(e, id) { e.preventDefault(); document.getElementById(id).classList.add('dragover'); }
+function dragleave(id) { document.getElementById(id).classList.remove('dragover'); }
+function dropFile(e, type) {
+  e.preventDefault();
+  dragleave('drop-'+type);
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f, type);
+}
+function handleFile(e, type) {
+  const f = e.target.files[0];
+  if (f) processFile(f, type);
+}
+
+function processFile(file, type) {
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const wb = XLSX.read(evt.target.result, {type:'array', cellDates:true});
+
+      if (type === 'pl') {
+        importPL(wb, file.name);
+      } else if (type === 'recv') {
+        importReceivable(wb, file.name);
+      } else if (type === 'cf') {
+        importCF(wb, file.name);
+      } else if (type === 'rev') {
+        importRevenue(wb, file.name);
+      } else if (type === 'exp') {
+        importExpense(wb, file.name);
+      }
+      saveToStorage();
+    } catch(e) {
+      setStatus(type, `❌ Lỗi: ${e.message}`, false);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function importPL(wb, fname) {
+  // Find sheet "Project List"
+  const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('project list')) || wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+  // Data starts at row index 3 (0-based = row 4 in Excel)
+  const dataRows = rows.slice(3).filter(r => r[0]);
+  state.projects = dataRows.map(r => ({
+    name: String(r[0]||'').trim(),
+    code: String(r[1]||'').trim(),
+    startDate: fmtDateISO(r[2]),
+    contractEnd: fmtDateISO(r[3]),
+    appendixEnd: fmtDateISO(r[4]),
+    mailPD: String(r[5]||'').trim(),
+    mailBOD: String(r[6]||'').trim(),
+  }));
+  renderProjectList();
+  populateDropdown();
+  setStatus('pl', `✓ Đã import ${state.projects.length} dòng từ "${fname}"`, true);
+  toast('Import Project List thành công ✓');
+}
+
+function importReceivable(wb, fname) {
+  // Template: sheet "Receivable", row 5 = header, data from row 6
+  const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('receivable')) || wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
+
+  // Row index 4 = Excel row 5 = header; data starts at index 5 (Excel row 6)
+  const dataRows = rows.slice(5);
+
+  // SUMIF by col A (index 0) — accumulate across multiple rows per project
+  const accum = {};
+  dataRows.forEach(r => {
+    const name = String(r[0]||'').trim();
+    if (!name) return;
+    if (!accum[name]) accum[name] = {contractExclVAT:0, contractInclVAT:0, workdoneExcl:0, paymentReq:0, received:0};
+    accum[name].contractExclVAT += toNum(r[3]);   // col D: Contract excl. VAT
+    accum[name].contractInclVAT += toNum(r[4]);   // col E: Contract incl. VAT
+    accum[name].workdoneExcl    += toNum(r[5]);   // col F: Workdone excl. VAT
+    accum[name].paymentReq      += toNum(r[11]);  // col L: Payment Request (Receivable)
+    accum[name].received        += toNum(r[12]);  // col M: Received from client
+  });
+
+  const projectCount = Object.keys(accum).length;
+  Object.entries(accum).forEach(([name, v]) => {
+    state.importedData.receivable[name] = {
+      contractExclVAT:  v.contractExclVAT,
+      totalInclVAT:     v.contractInclVAT,
+      approvedWorkdone: v.workdoneExcl,
+      receivable:       v.paymentReq,
+      received:         v.received,
+      vat:              v.contractInclVAT - v.contractExclVAT,
+    };
+  });
+
+  const totalRows = dataRows.filter(r => String(r[0]||'').trim()).length;
+  setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}"`, true);
+  onProjectChange();
+}
+
+function importCF(wb, fname) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  // Header = row 6 (index 5), data starts row 7 (index 6)
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  const dataRows = rows.slice(6); // skip rows 1-6
+
+  // Keywords triggering sign reversal on col I (Phát sinh nợ → negative)
+  const hoanUngKW = ['hoàn ứng', 'hoàn tạm ứng', 'hoàn tiền tạm ứng'];
+
+  const cf = {};
+  let countRows = 0, countReversed = 0;
+
+  dataRows.forEach(r => {
+    // Col O = index 14 (Bộ phận) — take first 3 chars as project code
+    const rawCode = String(r[14]||'').trim();
+    const code = rawCode.substring(0, 3);
+    if (!code) return;
+
+    const dienGiai = String(r[5]||'').toLowerCase(); // Col F = index 5
+    const colI = toNum(r[8]);  // Phát sinh nợ (Cash-in)
+    const colJ = toNum(r[9]);  // Phát sinh có (Cash-out)
+
+    // Check if Diễn giải contains hoàn ứng keywords
+    const isHoanUng = hoanUngKW.some(kw => dienGiai.includes(kw));
+
+    if (!cf[code]) cf[code] = {cashIn: 0, cashOut: 0};
+
+    if (isHoanUng && colI > 0) {
+      // Hoàn ứng: không tính vào cash-in (bỏ qua colI)
+      // Thay vào đó, trừ ra khỏi cash-out (giảm chi, vì đây là hoàn trả tạm ứng, không phải thu từ Owner)
+      cf[code].cashOut -= colI;
+      countReversed++;
+    } else {
+      cf[code].cashIn += colI;
+    }
+    cf[code].cashOut += colJ;
+    countRows++;
+  });
+
+  state.importedData.cashflow = cf;
+  const projectCount = Object.keys(cf).length;
+  setStatus('cf', `✓ Đã import ${countRows} dòng / ${projectCount} mã dự án từ "${fname}" (${countReversed} dòng hoàn ứng đảo dấu)`, true);
+  onProjectChange();
+}
+
+function importRevenue(wb, fname) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  // Header = row 6 (index 5); rows 7-8 = summary/blank; data from row 9 (index 8)
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  const dataRows = rows.slice(8); // skip rows 1-8
+
+  const rev = {};
+  let count = 0;
+
+  dataRows.forEach(r => {
+    const code = String(r[12]||'').trim(); // col M (index 12) = Vụ việc = full project code
+    if (!code) return;
+    const colJ = toNum(r[9]); // col J (index 9) = Phát sinh có = Revenue
+    if (!rev[code]) rev[code] = 0;
+    rev[code] += colJ;
+    count++;
+  });
+
+  // Store keyed by full project code — fillImportedData looks up by proj.code
+  Object.entries(rev).forEach(([code, val]) => {
+    if (!state.importedData.revenue[code]) state.importedData.revenue[code] = {};
+    state.importedData.revenue[code].revenue = val;
+  });
+
+  const projectCount = Object.keys(rev).length;
+  setStatus('rev', `✓ Đã import ${count} dòng / ${projectCount} mã dự án từ "${fname}"`, true);
+  onProjectChange();
+}
+
+function importExpense(wb, fname) {
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  // Header = row 6 (index 5); rows 7-8 = summary/blank; data from row 9 (index 8)
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+  const dataRows = rows.slice(8);
+
+  const exp = {};
+  let count = 0;
+
+  dataRows.forEach(r => {
+    // Col O (index 14) = Bộ phận — take first 3 chars as project code prefix
+    const rawCode = String(r[14]||'').trim();
+    const prefix = rawCode.substring(0, 3);
+    if (!prefix) return;
+
+    const colI = toNum(r[8]); // Phát sinh nợ
+    const colJ = toNum(r[9]); // Phát sinh có
+    if (!exp[prefix]) exp[prefix] = 0;
+    exp[prefix] += colI - colJ; // Net expense = I - J
+    count++;
+  });
+
+  // Store keyed by 3-char prefix — fillImportedData looks up by proj.code.substring(0,3)
+  Object.entries(exp).forEach(([prefix, val]) => {
+    if (!state.importedData.expense[prefix]) state.importedData.expense[prefix] = {};
+    state.importedData.expense[prefix].expenses = val;
+  });
+
+  const projectCount = Object.keys(exp).length;
+  setStatus('exp', `✓ Đã import ${count} dòng / ${projectCount} mã dự án từ "${fname}"`, true);
+  onProjectChange();
+}
+
+
+function fmtDateISO(v) {
+  if (!v) return '';
+  if (v instanceof Date) return v.toISOString().slice(0,10);
+  if (typeof v === 'number') {
+    // Excel serial date
+    const d = new Date(Math.round((v - 25569)*86400*1000));
+    return d.toISOString().slice(0,10);
+  }
+  return String(v).slice(0,10);
+}
+function toNum(v) { return parseFloat(v)||0; }
+function setStatus(type, msg, ok) {
+  const el = document.getElementById('status-'+type);
+  if (el) { el.textContent = msg; el.className = 'import-status ' + (ok ? 'status-ok' : 'status-err'); }
+}
+
+// ═══════════════════ EXPORT CSV ═══════════════════
+function exportProjectList() {
+  const headers = ['Project Name','Code','Starting Date','Completion Date (Contract)','Completion Date (Appendix)','Mail PD','Mail BOD'];
+  const rows = state.projects.map(p => [p.name, p.code, p.startDate, p.contractEnd, p.appendixEnd, p.mailPD||'', p.mailBOD||'']);
+  let csv = [headers, ...rows].map(r => r.map(c => `"${(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ProjectList.csv';
+  a.click();
+  toast('Đã xuất CSV ✓');
+}
+
+// ═══════════════════ SEND REPORT — MAIL MERGE ═══════════════════
+const emailSelected = new Set();
+let mergeQueue = [];   // [{proj, html, plain, toArr, subject}]
+let mergeIndex = 0;
+
+function initEmailSubject() {
+  const now = new Date();
+  const m = now.getMonth();
+  const reportMonth = String(m === 0 ? 12 : m).padStart(2,'0');
+  const reportYear  = m === 0 ? now.getFullYear()-1 : now.getFullYear();
+  document.getElementById('email-subject').value = '[PMR] Project Management Report ' + reportMonth + '/' + reportYear;
+}
+
+function getReportMonth() {
+  const now = new Date();
+  const m = now.getMonth();
+  const reportMonth = String(m === 0 ? 12 : m).padStart(2,'0');
+  const reportYear  = m === 0 ? now.getFullYear()-1 : now.getFullYear();
+  return reportMonth + '/' + reportYear;
+}
+
+// ── Render project checklist ──
+function renderEmailProjList() {
+  const container = document.getElementById('emailProjList');
+  if (!container) return;
+  container.innerHTML = '';
+  const projects = state.projects.filter(p => p.name);
+  if (!projects.length) {
+    container.innerHTML = '<div class="queue-empty">Chưa có dự án nào trong Project List</div>';
+    return;
+  }
+  projects.forEach(p => {
+    const hasBOD = p.mailBOD && p.mailBOD.trim();
+    const hasPD  = p.mailPD  && p.mailPD.trim();
+    const isChecked = emailSelected.has(p.name);
+    const div = document.createElement('div');
+    div.className = 'proj-check-item' + (isChecked ? ' selected' : '');
+    const nameEsc = p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    div.onclick = e => { if(e.target.tagName !== 'INPUT') toggleProject(p.name, div); };
+    div.innerHTML =
+      '<input type="checkbox"'+(isChecked?' checked':'')+' onclick="event.stopPropagation();toggleProject(\''+nameEsc+'\',this.closest(\'.proj-check-item\'))">' +
+      '<div>' +
+        '<div class="proj-check-name">'+p.name+'</div>' +
+        '<div class="proj-check-code">'+(p.code||'—')+'</div>' +
+        (hasPD||hasBOD
+          ? '<div class="proj-check-emails">'+ [hasPD?'PD: '+p.mailPD:'', hasBOD?'BOD: '+p.mailBOD:''].filter(Boolean).join(' | ') +'</div>'
+          : '<div class="proj-check-nowrap">⚠ Chưa có email</div>') +
+      '</div>';
+    container.appendChild(div);
+  });
+  updateSelCount();
+  renderEmailQueue();
+}
+
+function toggleProject(name, el) {
+  const cb = el.querySelector('input[type=checkbox]');
+  if (emailSelected.has(name)) {
+    emailSelected.delete(name); el.classList.remove('selected'); if(cb) cb.checked=false;
+  } else {
+    emailSelected.add(name);   el.classList.add('selected');    if(cb) cb.checked=true;
+  }
+  updateSelCount(); renderEmailQueue();
+}
+
+function toggleSelectAll() {
+  const projects = state.projects.filter(p => p.name);
+  const allSel = projects.every(p => emailSelected.has(p.name));
+  if (allSel) emailSelected.clear();
+  else projects.forEach(p => emailSelected.add(p.name));
+  renderEmailProjList();
+}
+
+function updateSelCount() {
+  const n = emailSelected.size;
+  const el = document.getElementById('sel-count-label');
+  if(el) el.innerHTML = '<strong>'+n+'</strong> dự án được chọn';
+  const qb = document.getElementById('queue-badge');
+  if(qb) qb.textContent = n;
+}
+
+function updateRecipientPreview() {
+  const sendBOD = document.getElementById('chk-bod').checked;
+  const sendPD  = document.getElementById('chk-pd').checked;
+  const parts = [];
+  if (sendPD)  parts.push('PD');
+  if (sendBOD) parts.push('BOD');
+  const el = document.getElementById('recipient-preview');
+  if(el) el.textContent = parts.length ? '→ Gửi tới '+parts.join(' & ')+' của từng dự án' : '⚠ Chưa chọn người nhận';
+  renderEmailQueue();
+}
+
+function renderEmailQueue() {
+  const queue = document.getElementById('emailQueue');
+  if(!queue) return;
+  const sendBOD = document.getElementById('chk-bod')?.checked;
+  const sendPD  = document.getElementById('chk-pd')?.checked;
+  const selected = state.projects.filter(p => emailSelected.has(p.name));
+  if(!selected.length) {
+    queue.innerHTML = '<div class="queue-empty">Chọn dự án và nhấn "Tạo tất cả email"</div>';
+    return;
+  }
+  queue.innerHTML = selected.map((p,i) => {
+    const toArr = getToAddresses(p);
+    const toStr = toArr.length
+      ? toArr.map(e=>'<span>'+e+'</span>').join(' | ')
+      : '<span style="color:var(--red)">⚠ Không có email</span>';
+    return '<div class="queue-item"><div class="queue-item-num">'+(i+1)+'</div><div class="queue-item-info"><div class="queue-item-name">'+p.name+'</div><div class="queue-item-to">'+toStr+'</div></div></div>';
+  }).join('');
+}
+
+function getToAddresses(p) {
+  const sendBOD = document.getElementById('chk-bod').checked;
+  const sendPD  = document.getElementById('chk-pd').checked;
+  const arr = [];
+  if (sendPD  && p.mailPD  && p.mailPD.trim())  arr.push(p.mailPD.trim());
+  if (sendBOD && p.mailBOD && p.mailBOD.trim()) arr.push(p.mailBOD.trim());
+  return arr;
+}
+
+// ── Build one project's HTML report table ──
+function buildProjTable(p) {
+  const recvKey = Object.keys(state.importedData.receivable).find(k=>k.toLowerCase()===p.name.toLowerCase())||p.name;
+  const recv = state.importedData.receivable[recvKey] || {};
+  const prefix = (p.code||'').substring(0,3);
+  const cf  = state.importedData.cashflow[prefix] || {};
+  const rev = state.importedData.revenue[p.code]  || {};
+  const exp = state.importedData.expense[prefix]  || {};
+  const f   = n => { if(!n&&n!==0) return '&mdash;'; const v=Math.abs(n)>=1e6?n/1e9:n; return v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  const pct = (n,b) => (!n||!b) ? '&mdash;' : (n/b*100).toFixed(1)+'%';
+  const contractExcl=recv.contractExclVAT||0, contractIncl=recv.totalInclVAT||0;
+  const workdone=recv.approvedWorkdone||0;
+  const cashIn=cf.cashIn||0, cashOut=cf.cashOut||0, cashBal=cashIn-cashOut;
+  const receivable=recv.receivable||0, received=recv.received||0, remainRecv=receivable-received;
+  const revenue=rev.revenue||0, expenses=exp.expenses||0, netPL=revenue-expenses;
+  const s={wrap:'font-family:Arial,sans-serif;font-size:11px;border-collapse:collapse;width:100%;margin-bottom:8px;',title:'background:#0D1B2A;color:#fff;text-align:center;padding:8px;font-size:12px;font-weight:700;letter-spacing:0.06em;',gold:'background:#E8B84B;color:#0D1B2A;font-weight:800;padding:2px 7px;border-radius:3px;margin-right:8px;font-size:10px;',sh:'background:#0D1B2A;color:#fff;padding:6px 12px;font-weight:700;font-size:10px;letter-spacing:0.05em;text-transform:uppercase;',meta:'padding:5px 12px;border-bottom:1px solid #EEF1F5;',mlabel:'color:#6B7A8D;font-weight:600;font-size:10px;text-transform:uppercase;width:38%;',mval:'color:#1B3A5C;font-weight:700;font-size:11px;',row:'border-bottom:1px solid #EEF1F5;',rowalt:'background:#EEF3F8;border-bottom:1px solid #EEF1F5;',label:'padding:5px 12px 5px 22px;color:#1A2433;',num:'padding:5px 12px;text-align:right;font-weight:600;color:#0D1B2A;font-variant-numeric:tabular-nums;',pct:'padding:5px 8px;text-align:right;color:#6B7A8D;font-size:10px;width:70px;',total:'padding:6px 12px 6px 22px;background:#EAF2FF;font-weight:700;color:#0D1B2A;border-top:2px solid #2E86AB;',tnum:'padding:6px 12px;background:#EAF2FF;text-align:right;font-weight:700;color:#0D1B2A;border-top:2px solid #2E86AB;',bal:'padding:6px 12px 6px 22px;background:#E8F5EE;font-weight:700;color:#1B7A4A;border-top:2px solid #1B7A4A;',bnum:'padding:6px 12px;background:#E8F5EE;text-align:right;font-weight:700;color:#1B7A4A;border-top:2px solid #1B7A4A;',balneg:'padding:6px 12px 6px 22px;background:#FEF0EF;font-weight:700;color:#C0392B;border-top:2px solid #C0392B;',bnumneg:'padding:6px 12px;background:#FEF0EF;text-align:right;font-weight:700;color:#C0392B;border-top:2px solid #C0392B;',colhdr:'background:#EEF3F8;padding:5px 12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#6B7A8D;border-bottom:1px solid #D0D8E4;'};
+  const today=new Date(); const start=p.startDate?new Date(p.startDate):null; const endDate=p.appendixEnd?new Date(p.appendixEnd):(p.contractEnd?new Date(p.contractEnd):null);
+  const fmtD=d=>d?new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'&mdash;';
+  const durM=(start&&endDate)?((endDate-start)/(1000*60*60*24*30)).toFixed(1):'&mdash;';
+  const actM=start?((today-start)/(1000*60*60*24*30)).toFixed(1):'&mdash;';
+  const durPct=(start&&endDate)?(((today-start)/(endDate-start))*100).toFixed(1)+'%':'&mdash;';
+  const bp=cashBal<0, rp=remainRecv<0, np=netPL<0;
+  return '<table style="'+s.wrap+'">'
+    +'<tr><td colspan="3" style="'+s.title+'">PROJECT MANAGEMENT REPORT</td></tr>'
+    +'<tr><td colspan="2" style="'+s.meta+' border-right:1px solid #EEF1F5;width:50%;"><table style="width:100%;border-collapse:collapse;"><tr><td style="'+s.mlabel+'">Project</td><td style="'+s.mval+'">'+p.name+'</td></tr><tr><td style="'+s.mlabel+'">Code</td><td style="'+s.mval+';color:#2E86AB;">'+(p.code||'&mdash;')+'</td></tr></table></td>'
+    +'<td style="'+s.meta+' padding-left:16px;"><table style="width:100%;border-collapse:collapse;"><tr><td style="'+s.mlabel+'">Report Date</td><td style="'+s.mval+'">'+today.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+'</td></tr></table></td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">I</span>PROJECT SCHEDULE</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">Starting date</td><td style="'+s.num+'">'+fmtD(p.startDate)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">Contract completion</td><td style="'+s.num+'">'+fmtD(p.contractEnd)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">Extension as appendix</td><td style="'+s.num+'">'+fmtD(p.appendixEnd)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">Contract duration</td><td style="'+s.num+'">'+durM+' months</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">Actual duration</td><td style="'+s.num+'">'+actM+' months</td><td style="'+s.pct+'">'+durPct+'</td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">II</span>CONTRACT AMOUNT</td></tr>'
+    +'<tr><td style="'+s.colhdr+'">Descriptions</td><td style="'+s.colhdr+' text-align:right;">Amount (Bil VND)</td><td style="'+s.colhdr+' text-align:right;">% Contract</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">1. Contract value (excl. VAT)</td><td style="'+s.num+'">'+f(contractExcl)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">2. Appendix value (excl. VAT)</td><td style="'+s.num+'">&mdash;</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">3. Un-approved Additional Value (excl. VAT)</td><td style="'+s.num+'">&mdash;</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr><td style="'+s.total+'">4. Total contract amount (excl. VAT)</td><td style="'+s.tnum+'">'+f(contractExcl)+'</td><td style="'+s.tnum+'"></td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">5. VAT</td><td style="'+s.num+'">'+f(recv.vat)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr><td style="'+s.total+'">6. Total contract amount (incl. VAT)</td><td style="'+s.tnum+'">'+f(contractIncl)+'</td><td style="'+s.tnum+'"></td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">III</span>WORKDONE</td></tr>'
+    +'<tr><td style="'+s.colhdr+'">Descriptions</td><td style="'+s.colhdr+' text-align:right;">Amount (Bil VND)</td><td style="'+s.colhdr+' text-align:right;">% Contract</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">1. Approved workdone</td><td style="'+s.num+'">'+f(workdone)+'</td><td style="'+s.pct+'">'+pct(workdone,contractExcl)+'</td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">2. Un-approved workdone</td><td style="'+s.num+'">&mdash;</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr><td style="'+s.total+'">Total Workdone</td><td style="'+s.tnum+'">'+f(workdone)+'</td><td style="'+s.tnum+'">'+pct(workdone,contractExcl)+'</td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">IV</span>CASH FLOW</td></tr>'
+    +'<tr><td style="'+s.colhdr+'">Descriptions</td><td style="'+s.colhdr+' text-align:right;">Amount (Bil VND)</td><td style="'+s.colhdr+' text-align:right;">% Contract</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">1. Total Cash-in</td><td style="'+s.num+'">'+f(cashIn)+'</td><td style="'+s.pct+'">'+pct(cashIn,contractIncl)+'</td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">2. Total Cash-out</td><td style="'+s.num+'">'+f(cashOut)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr><td style="'+(bp?s.balneg:s.bal)+'">CASH BALANCE (1-2)</td><td style="'+(bp?s.bnumneg:s.bnum)+'">'+f(cashBal)+'</td><td style="'+(bp?s.bnumneg:s.bnum)+'">'+pct(cashBal,contractIncl)+'</td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">V</span>RECEIVABLE</td></tr>'
+    +'<tr><td style="'+s.colhdr+'">Descriptions</td><td style="'+s.colhdr+' text-align:right;">Amount (Bil VND)</td><td style="'+s.colhdr+' text-align:right;">% Contract</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">1. Receivable</td><td style="'+s.num+'">'+f(receivable)+'</td><td style="'+s.pct+'">'+pct(receivable,contractIncl)+'</td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">2. Received</td><td style="'+s.num+'">'+f(received)+'</td><td style="'+s.pct+'">'+pct(received,contractIncl)+'</td></tr>'
+    +'<tr><td style="'+(rp?s.balneg:s.bal)+'">REMAIN RECEIVABLE (1-2)</td><td style="'+(rp?s.bnumneg:s.bnum)+'">'+f(remainRecv)+'</td><td style="'+(rp?s.bnumneg:s.bnum)+'">'+pct(remainRecv,contractIncl)+'</td></tr>'
+    +'<tr><td colspan="3" style="'+s.sh+'"><span style="'+s.gold+'">VI</span>REVENUE vs EXPENSES</td></tr>'
+    +'<tr><td style="'+s.colhdr+'">Descriptions</td><td style="'+s.colhdr+' text-align:right;">Amount (Bil VND)</td><td style="'+s.colhdr+' text-align:right;">% Contract</td></tr>'
+    +'<tr style="'+s.row+'"><td style="'+s.label+'">1. Revenue</td><td style="'+s.num+'">'+f(revenue)+'</td><td style="'+s.pct+'">'+pct(revenue,contractExcl)+'</td></tr>'
+    +'<tr style="'+s.rowalt+'"><td style="'+s.label+'">2. Expenses</td><td style="'+s.num+'">'+f(expenses)+'</td><td style="'+s.pct+'"></td></tr>'
+    +'<tr><td style="'+(np?s.balneg:s.bal)+'">Revenue - Expenses</td><td style="'+(np?s.bnumneg:s.bnum)+'">'+f(netPL)+'</td><td style="'+(np?s.bnumneg:s.bnum)+'"></td></tr>'
+    +'</table>';
+}
+
+function buildOneEmailHTML(proj, reportMonth, sig) {
+  return '<div style="font-family:Arial,sans-serif;font-size:13px;line-height:1.8;color:#1a2433;max-width:680px;">'
+    +'<p>Dear BOD and PD,</p>'
+    +'<p>Please find below the project management report for <strong>'+reportMonth+'</strong>, project <strong>'+proj.name+'</strong>:</p>'
+    +'<div style="margin:16px 0;">'+buildProjTable(proj)+'</div>'
+    +'<p>Thanks &amp; Best Regards,<br><strong>'+sig+'</strong></p>'
+    +'</div>';
+}
+
+// ── Mail Merge: generate one email per project ──
+function generateAllPreviews() {
+  const selected = state.projects.filter(p => emailSelected.has(p.name));
+  if (!selected.length) { toast('Vui lòng chọn ít nhất 1 dự án'); return; }
+  const reportMonth = getReportMonth();
+  const sig = (document.getElementById('email-signature')?.value || 'Finance Department').trim();
+  const subject = document.getElementById('email-subject').value || '[PMR] Project Management Report ' + reportMonth;
+  document.getElementById('email-subject').value = subject;
+
+  mergeQueue = selected.map(p => ({
+    proj:    p,
+    html:    buildOneEmailHTML(p, reportMonth, sig),
+    plain:   'Dear BOD and PD,\n\nPlease find below the project management report for '+reportMonth+', project '+p.name+'.\n\nThanks & Best Regards,\n'+sig,
+    toArr:   getToAddresses(p),
+    subject: subject,
+  }));
+  mergeIndex = 0;
+
+  document.getElementById('merge-box').style.display = 'block';
+  document.getElementById('empty-queue-box').style.display = 'none';
+  renderMergeSlide();
+  toast('✓ Đã tạo ' + mergeQueue.length + ' email — dùng ◀ ▶ để duyệt từng email');
+}
+
+function renderMergeSlide() {
+  if (!mergeQueue.length) return;
+  const item = mergeQueue[mergeIndex];
+  const total = mergeQueue.length;
+
+  // Badge
+  document.getElementById('merge-badge').textContent = (mergeIndex+1) + '/' + total;
+
+  // Meta bar: To, Subject
+  const toDisplay = item.toArr.length
+    ? item.toArr.join(', ')
+    : '<span style="color:#C0392B">⚠ Không có email</span>';
+  document.getElementById('merge-meta').innerHTML =
+    '<div><span>ĐẾN: </span><strong>'+toDisplay+'</strong></div>'
+    +'<div><span>CC: </span><strong>'+(document.getElementById('email-cc').value||'—')+'</strong></div>'
+    +'<div><span>SUBJECT: </span><strong>'+item.subject+'</strong></div>';
+
+  // Preview
+  document.getElementById('merge-preview').innerHTML = item.html;
+}
+
+function mergeNav(dir) {
+  mergeIndex = Math.max(0, Math.min(mergeQueue.length-1, mergeIndex+dir));
+  renderMergeSlide();
+}
+
+function sendCurrentGmail() {
+  if (!mergeQueue.length) return;
+  const item = mergeQueue[mergeIndex];
+  if (!item.toArr.length) { toast('⚠ Dự án này chưa có email PD/BOD'); return; }
+  const cc  = document.getElementById('email-cc').value.trim();
+  const htmlBlob = new Blob([item.html], {type:'text/html'});
+  const textBlob = new Blob([item.plain],{type:'text/plain'});
+  navigator.clipboard.write([new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob})]).then(() => {
+    let url = 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(item.toArr.join(','))+'&su='+encodeURIComponent(item.subject);
+    if (cc) url += '&cc='+encodeURIComponent(cc);
+    window.open(url,'_blank');
+    toast('Đã copy & mở Gmail cho '+item.proj.name+' — nhấn Ctrl+V để dán');
+  }).catch(() => {
+    let url = 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(item.toArr.join(','))+'&su='+encodeURIComponent(item.subject)+'&body='+encodeURIComponent(item.plain);
+    if (cc) url += '&cc='+encodeURIComponent(cc);
+    window.open(url,'_blank');
+    toast('Đã mở Gmail — Ctrl+V để dán nội dung');
+  });
+}
+
+function sendCurrentMailto() {
+  if (!mergeQueue.length) return;
+  const item = mergeQueue[mergeIndex];
+  if (!item.toArr.length) { toast('⚠ Dự án này chưa có email PD/BOD'); return; }
+  const cc = document.getElementById('email-cc').value.trim();
+  let url = 'mailto:'+item.toArr.join(',')+'?subject='+encodeURIComponent(item.subject)+'&body='+encodeURIComponent(item.plain);
+  if (cc) url += '&cc='+encodeURIComponent(cc);
+  window.open(url,'_blank');
+  toast('Đã mở email client cho '+item.proj.name);
+}
+
+function copyCurrentEmail() {
+  if (!mergeQueue.length) return;
+  const item = mergeQueue[mergeIndex];
+  const htmlBlob = new Blob([item.html], {type:'text/html'});
+  const textBlob = new Blob([item.plain],{type:'text/plain'});
+  navigator.clipboard.write([new ClipboardItem({'text/html':htmlBlob,'text/plain':textBlob})])
+    .then(()=>toast('✓ Đã copy email của '+item.proj.name+' — dán vào Gmail/Outlook'))
+    .catch(()=>toast('Copy thất bại — thử Ctrl+A trong preview'));
+}
+
+async function sendAllGmail() {
+  if (!mergeQueue.length) { toast('Chưa tạo email'); return; }
+  const cc = document.getElementById('email-cc').value.trim();
+  let opened = 0;
+  for (let i = 0; i < mergeQueue.length; i++) {
+    const item = mergeQueue[i];
+    if (!item.toArr.length) continue;
+    await new Promise(r => setTimeout(r, i===0?0:800)); // small delay between tabs
+    let url = 'https://mail.google.com/mail/?view=cm&fs=1&to='+encodeURIComponent(item.toArr.join(','))+'&su='+encodeURIComponent(item.subject)+'&body='+encodeURIComponent(item.plain);
+    if (cc) url += '&cc='+encodeURIComponent(cc);
+    window.open(url,'_blank');
+    opened++;
+  }
+  toast('Đã mở '+opened+' tab Gmail — dán nội dung vào từng tab bằng Ctrl+V');
+}
+
+// Legacy aliases (kept for compatibility)
+function generatePreview() { generateAllPreviews(); }
+function captureAndPreview() { generateAllPreviews(); }
+function sendViaGmail() { sendCurrentGmail(); }
+function sendViaMailto() { sendCurrentMailto(); }
+function copyEmailBody() { copyCurrentEmail(); }
+function getEmailBody() { return mergeQueue[mergeIndex]?.plain || ''; }
+function getEmailHTML() { return mergeQueue[mergeIndex]?.html  || ''; }
+function buildFullEmailHTML() {}
+function buildPlainText() {}
+function getPlainText() {}
+function buildEmailHTML() {}
+
+// ═══════════════════ SMTP API CLIENT ═══════════════════
+
+function loadEjsConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('pmr_smtp_config') || '{}');
+    if (cfg.serverUrl) document.getElementById('ejs-server-url').value = cfg.serverUrl;
+    if (cfg.sender)    document.getElementById('ejs-sender').value     = cfg.sender;
+  } catch(e) {}
+}
+
+function saveEjsConfig() {
+  const cfg = {
+    serverUrl: document.getElementById('ejs-server-url').value.trim(),
+    sender:    document.getElementById('ejs-sender').value,
+  };
+  localStorage.setItem('pmr_smtp_config', JSON.stringify(cfg));
+}
+
+function getSmtpCfg() {
+  return {
+    serverUrl: document.getElementById('ejs-server-url').value.trim(),
+    sender:    document.getElementById('ejs-sender').value,
+  };
+}
+
+function toggleEjsConfig() {
+  const body = document.getElementById('ejs-config-body');
+  const btn  = document.getElementById('ejs-toggle-btn');
+  if (body.style.display === 'none') {
+    body.style.display = ''; btn.textContent = '▲ Thu gọn';
+  } else {
+    body.style.display = 'none'; btn.textContent = '▼ Mở rộng';
+  }
+}
+
+async function testEjsConnection() {
+  const cfg = getSmtpCfg();
+  const st = document.getElementById('ejs-status');
+  if (!cfg.serverUrl) {
+    st.innerHTML = '<span style="color:var(--red)">⚠ Vui lòng điền Server URL</span>'; return;
+  }
+  st.innerHTML = '<span style="color:var(--muted)">Đang test kết nối...</span>';
+  try {
+    // Step 1: check server health
+    const healthRes = await fetch(cfg.serverUrl + '/health');
+    const health = await healthRes.json();
+    if (!health.ok) { st.innerHTML = '<span style="color:var(--red)">✗ Server lỗi</span>'; return; }
+
+    // Step 2: test SMTP for selected sender
+    st.innerHTML = '<span style="color:var(--muted)">Server online — đang test SMTP...</span>';
+    const smtpRes = await fetch(cfg.serverUrl + '/test/' + encodeURIComponent(cfg.sender));
+    const smtp = await smtpRes.json();
+    if (smtp.ok) {
+      st.innerHTML = '<span style="color:var(--green)">✓ Kết nối thành công! SMTP OK cho ' + cfg.sender + '</span>';
+    } else {
+      st.innerHTML = '<span style="color:orange)">⚠ Server online nhưng SMTP lỗi: ' + smtp.error + '</span>';
+    }
+  } catch(e) {
+    st.innerHTML = '<span style="color:var(--red)">✗ Không kết nối được: ' + e.message + '</span>';
+  }
+}
+
+function setSendStatus(msg, ok) {
+  const el = document.getElementById('send-status');
+  if (el) el.innerHTML = '<span style="color:' + (ok ? 'var(--green)' : 'var(--red)') + '">' + msg + '</span>';
+}
+
+async function sendOneEmail(item) {
+  const cfg = getSmtpCfg();
+  if (!cfg.serverUrl) throw new Error('Chưa điền Server URL — vui lòng cấu hình SMTP server');
+  if (!item.toArr.length) throw new Error('Dự án "' + item.proj.name + '" chưa có email PD/BOD');
+
+  const cc       = document.getElementById('email-cc').value.trim();
+  const fromName = (document.getElementById('email-signature')?.value || 'Finance Department').trim();
+  const fromEmail = cfg.sender;
+
+  const res = await fetch(cfg.serverUrl + '/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to:        item.toArr.join(','),
+      cc:        cc || '',
+      subject:   item.subject,
+      html:      item.html,
+      fromName:  fromName,
+      fromEmail: fromEmail,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) throw new Error(data.error || 'Gửi thất bại');
+}
+
+async function sendCurrentDirect() {
+  if (!mergeQueue.length) { toast('Nhấn "Tạo tất cả email" trước'); return; }
+  const item = mergeQueue[mergeIndex];
+  setSendStatus('Đang gửi...', true);
+  try {
+    await sendOneEmail(item);
+    setSendStatus('✓ Đã gửi: ' + item.proj.name + ' → ' + item.toArr.join(', '), true);
+    toast('✓ Email đã gửi: ' + item.proj.name);
+    if (mergeIndex < mergeQueue.length - 1) {
+      setTimeout(() => { mergeNav(1); setSendStatus('', true); }, 1200);
+    }
+  } catch(e) {
+    setSendStatus('✗ ' + e.message, false);
+    toast('✗ Lỗi: ' + e.message);
+  }
+}
+
+async function sendAllDirect() {
+  if (!mergeQueue.length) { toast('Nhấn "Tạo tất cả email" trước'); return; }
+  if (!getSmtpCfg().serverUrl) { toast('⚠ Chưa điền Server URL'); return; }
+  let sent = 0, failed = 0, skipped = 0;
+  setSendStatus('Đang gửi 0/' + mergeQueue.length + '...', true);
+  for (let i = 0; i < mergeQueue.length; i++) {
+    const item = mergeQueue[i];
+    mergeIndex = i; renderMergeSlide();
+    setSendStatus('Đang gửi ' + (i+1) + '/' + mergeQueue.length + ': ' + item.proj.name + '...', true);
+    if (!item.toArr.length) { skipped++; continue; }
+    try {
+      await sendOneEmail(item);
+      sent++;
+      await new Promise(r => setTimeout(r, 400));
+    } catch(e) {
+      failed++;
+      console.warn('Send failed:', item.proj.name, e.message);
+    }
+  }
+  const summary = '✓ Đã gửi: ' + sent + '/' + mergeQueue.length
+    + (skipped ? ' | Bỏ qua: ' + skipped : '')
+    + (failed  ? ' | Lỗi: ' + failed : '');
+  setSendStatus(summary, failed === 0);
+  toast(sent + ' email đã gửi' + (failed ? ', ' + failed + ' lỗi' : ' thành công!'));
+}
+
+// ═══════════════════ TOAST ═══════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
