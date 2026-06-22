@@ -1371,11 +1371,14 @@ function setReportDate() {
 }
 
 // ═══════════════════ TABS ═══════════════════
-function switchTab(name) {
+function switchTab(name, evt) {
+  const e = evt || event;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  event.target.classList.add('active');
+  // Find matching tab button
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(b => { if (b.textContent.toLowerCase().includes(name) || b.getAttribute('onclick')?.includes("'"+name+"'")) b.classList.add('active'); });
 }
 
 // ═══════════════════ LOCAL STORAGE ═══════════════════
@@ -2711,10 +2714,13 @@ function generateAssessment(proj) {
     const hasRecvData = recv && (recv.contractExclVAT || recv.receivable);
     comments.push({cls: hasRecvData ? 'warning' : 'neutral',
       icon: hasRecvData ? '⚠️' : 'ℹ️',
-      title:'CLAIM APPROVAL',
+      title: hasRecvData ? 'CLAIM APPROVAL — ACTION REQUIRED' : 'CLAIM APPROVAL',
       msg: hasRecvData
-        ? 'Receivable data found but IPC detail is missing — please re-import the Receivable file to enable this assessment.'
-        : 'No IPC detail available. Import Receivable file to enable claim assessment.'
+        ? 'Receivable numbers are loaded but IPC detail (invoice dates, due dates) is missing. Please re-import the Receivable file.'
+        : 'No receivable data found. Import Receivable file to enable this assessment.',
+      action: hasRecvData
+        ? '<button onclick="switchTabDirect()" style="background:#2E86AB;color:#fff;border:none;padding:4px 12px;border-radius:3px;cursor:pointer;font-size:11px;font-weight:600;">→ Go to Import Data</button>'
+        : ''
     });
   }
 
@@ -2784,7 +2790,7 @@ function generateAssessment(proj) {
   body.innerHTML = comments.map(c =>
     `<div class="comment-item ${c.cls}">
       <div class="comment-icon">${c.icon}</div>
-      <div class="comment-text"><strong>${c.title}</strong>${c.msg}</div>
+      <div class="comment-text"><strong>${c.title}</strong>${c.msg}${c.action ? `<div style="margin-top:6px;">${c.action}</div>` : ''}</div>
     </div>`
   ).join('');
 }
@@ -2820,6 +2826,14 @@ function setPdfBtnState(enabled) {
 }
 
 // ═══════════════════ ASSESSMENT REFRESH ═══════════════════
+function switchTabDirect() {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-import').classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'import'")) b.classList.add('active');
+  });
+}
 function refreshAssessment() {
   const name = document.getElementById('projectSelect').value;
   if (!name) { toast('Please select a project first'); return; }
