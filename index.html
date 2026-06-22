@@ -2434,16 +2434,31 @@ async function setupSupabaseTables() {
   } catch(e) { setSbStatus('✗ ' + e.message, false); }
 }
 
+function serializeReceivable(recv) {
+  // Convert date objects in ipcRows to ISO strings for JSON storage
+  const result = {};
+  Object.entries(recv).forEach(([name, v]) => {
+    result[name] = Object.assign({}, v, {
+      ipcRows: (v.ipcRows || []).map(r => Object.assign({}, r, {
+        invoiceDate: r.invoiceDate instanceof Date ? r.invoiceDate.toISOString() : (r.invoiceDate || null),
+        dueDate:     r.dueDate     instanceof Date ? r.dueDate.toISOString()     : (r.dueDate     || null),
+        actualPayDate: r.actualPayDate instanceof Date ? r.actualPayDate.toISOString() : (r.actualPayDate || null),
+      }))
+    });
+  });
+  return result;
+}
+
 async function pushToCloud() {
   if (!sbClient && !initSupabase()) return;
   setSbStatus('Đang push lên cloud...', true);
   try {
     const payload = [
-      { key: 'projects',    value: state.projects,             updated_at: new Date().toISOString() },
-      { key: 'receivable',  value: state.importedData.receivable, updated_at: new Date().toISOString() },
-      { key: 'cashflow',    value: state.importedData.cashflow,   updated_at: new Date().toISOString() },
-      { key: 'revenue',     value: state.importedData.revenue,    updated_at: new Date().toISOString() },
-      { key: 'expense',     value: state.importedData.expense,    updated_at: new Date().toISOString() },
+      { key: 'projects',    value: state.projects,                          updated_at: new Date().toISOString() },
+      { key: 'receivable',  value: serializeReceivable(state.importedData.receivable), updated_at: new Date().toISOString() },
+      { key: 'cashflow',    value: state.importedData.cashflow,             updated_at: new Date().toISOString() },
+      { key: 'revenue',     value: state.importedData.revenue,              updated_at: new Date().toISOString() },
+      { key: 'expense',     value: state.importedData.expense,              updated_at: new Date().toISOString() },
     ];
     const { error } = await sbClient.from('pmr_data').upsert(payload, { onConflict: 'key' });
     if (error) throw new Error(error.message);
@@ -2573,149 +2588,175 @@ function generateAssessment(proj) {
   const startDate = proj.startDate ? new Date(proj.startDate) : null;
   const endDate   = proj.appendixEnd ? new Date(proj.appendixEnd) : (proj.contractEnd ? new Date(proj.contractEnd) : null);
   if (startDate && endDate && contractExcl > 0) {
-    startDate.setHours(0,0,0,0);
-    endDate.setHours(0,0,0,0);
+    startDate.setHours(0,0,0,0); endDate.setHours(0,0,0,0);
     const totalDays   = daysDiff(startDate, endDate);
     const elapsedDays = Math.min(daysDiff(startDate, today), totalDays);
     const timePct     = totalDays > 0 ? (elapsedDays / totalDays) * 100 : 0;
     const workPct     = contractExcl > 0 ? (workdone / contractExcl) * 100 : 0;
     const gap         = workPct - timePct;
     const daysLeft    = daysDiff(today, endDate);
-
     let schedClass, schedIcon, schedTitle, schedMsg;
     if (daysLeft < 0) {
-      // Already past deadline
-      schedClass = 'bad'; schedIcon = '🔴';
-      schedTitle = 'OVERDUE PROJECT';
-      schedMsg = `Project completion deadline was ${fmtDateShort(endDate)} (${Math.abs(daysLeft)} days ago). `
-        + `Time elapsed: ${timePct.toFixed(1)}% | Work approved: ${workPct.toFixed(1)}%.`;
+      schedClass='bad'; schedIcon='🔴'; schedTitle='OVERDUE PROJECT';
+      schedMsg=`Project completion deadline was ${fmtDateShort(endDate)} (${Math.abs(daysLeft)} days ago). Time elapsed: ${timePct.toFixed(1)}% | Work approved: ${workPct.toFixed(1)}%.`;
     } else if (gap >= 5) {
-      schedClass = 'good'; schedIcon = '🟢';
-      schedTitle = 'AHEAD OF SCHEDULE';
-      schedMsg = `Work progress (${workPct.toFixed(1)}%) is ahead of time elapsed (${timePct.toFixed(1)}%) by ${gap.toFixed(1)} percentage points. ${daysLeft} days remaining.`;
+      schedClass='good'; schedIcon='🟢'; schedTitle='AHEAD OF SCHEDULE';
+      schedMsg=`Work progress (${workPct.toFixed(1)}%) is ahead of time elapsed (${timePct.toFixed(1)}%) by ${gap.toFixed(1)} pts. ${daysLeft} days remaining.`;
     } else if (gap >= -5) {
-      schedClass = 'neutral'; schedIcon = '🔵';
-      schedTitle = 'ON SCHEDULE';
-      schedMsg = `Work progress (${workPct.toFixed(1)}%) is in line with time elapsed (${timePct.toFixed(1)}%). ${daysLeft} days remaining.`;
+      schedClass='neutral'; schedIcon='🔵'; schedTitle='ON SCHEDULE';
+      schedMsg=`Work progress (${workPct.toFixed(1)}%) is in line with time elapsed (${timePct.toFixed(1)}%). ${daysLeft} days remaining.`;
     } else if (gap >= -15) {
-      schedClass = 'warning'; schedIcon = '🟡';
-      schedTitle = 'SLIGHTLY BEHIND SCHEDULE';
-      schedMsg = `Work progress (${workPct.toFixed(1)}%) is lagging behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} percentage points. ${daysLeft} days remaining — action required.`;
+      schedClass='warning'; schedIcon='🟡'; schedTitle='SLIGHTLY BEHIND SCHEDULE';
+      schedMsg=`Work progress (${workPct.toFixed(1)}%) is lagging behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} pts. ${daysLeft} days remaining — action required.`;
     } else {
-      schedClass = 'bad'; schedIcon = '🔴';
-      schedTitle = 'SIGNIFICANTLY BEHIND SCHEDULE';
-      schedMsg = `Work progress (${workPct.toFixed(1)}%) is significantly behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} percentage points. Only ${daysLeft} days remaining — immediate action required.`;
+      schedClass='bad'; schedIcon='🔴'; schedTitle='SIGNIFICANTLY BEHIND SCHEDULE';
+      schedMsg=`Work progress (${workPct.toFixed(1)}%) is significantly behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} pts. Only ${daysLeft} days remaining — immediate action required.`;
     }
-    comments.push({cls: schedClass, icon: schedIcon, title: schedTitle, msg: schedMsg});
+    comments.push({cls:schedClass, icon:schedIcon, title:schedTitle, msg:schedMsg});
   } else {
     comments.push({cls:'neutral', icon:'ℹ️', title:'SCHEDULE', msg:'Insufficient data to assess schedule (missing start/end date or contract value).'});
   }
 
   // ──────────────────────────────────────────────────
-  // 2. CLAIM APPROVAL STATUS (Invoice date check)
+  // 2. CLAIM APPROVAL
+  //    Logic: look at the most recent invoice date for this project.
+  //    If today >= day 5 of current month AND the latest invoice is
+  //    from 2+ months ago (i.e., nothing invoiced last month) → alert.
+  //    If latest invoice is from last month → OK.
+  //    If no invoice data at all → neutral.
   // ──────────────────────────────────────────────────
-  if (ipcRows.length > 0) {
-    // Find IPCs where invoice has NOT been issued (invoiceDate is empty) and paymentReq > 0
-    const currentMonth = today.getMonth();
-    const currentYear  = today.getFullYear();
+  const invoicedRows = ipcRows.filter(r => r.invoiceDate && r.invoiceDate !== '' && r.invoiceDate !== 0);
+
+  if (invoicedRows.length > 0) {
     const dayOfMonth   = today.getDate();
+    const currentMonth = today.getMonth();   // 0-based
+    const currentYear  = today.getFullYear();
 
-    // Get last month label
-    const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
-    const lastMonthName = lastMonthDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+    // Parse all invoice dates and find the most recent one
+    const invoiceDates = invoicedRows
+      .map(r => parseExcelDate(r.invoiceDate))
+      .filter(d => d instanceof Date && !isNaN(d));
 
-    const uninvoiced = ipcRows.filter(r => {
-      const hasReq = r.paymentReq > 0;
-      const noInvoice = !r.invoiceDate || r.invoiceDate === '' || r.invoiceDate === 0;
-      return hasReq && noInvoice;
-    });
+    if (invoiceDates.length > 0) {
+      const latestInvoice = new Date(Math.max(...invoiceDates.map(d => d.getTime())));
+      const latestMonth = latestInvoice.getMonth();   // 0-based
+      const latestYear  = latestInvoice.getFullYear();
 
-    if (uninvoiced.length > 0 && dayOfMonth >= 5) {
-      // Past day 5 of month but previous month work not yet invoiced
-      const ipcList = uninvoiced.map(r => r.ipcNo).filter(Boolean).join(', ') || `${uninvoiced.length} IPC(s)`;
-      comments.push({
-        cls: 'bad', icon: '🔴',
-        title: 'DELAYED CLAIM APPROVAL',
-        msg: `As of today (day ${dayOfMonth} of ${today.toLocaleDateString('en-US',{month:'long',year:'numeric'})}), `
-          + `${uninvoiced.length} payment request(s) (${ipcList}) have not yet had VAT invoices issued for work done in ${lastMonthName}. `
-          + `Invoices should be issued by day 5–10 of each month.`
-      });
-    } else if (uninvoiced.length > 0) {
-      comments.push({
-        cls: 'warning', icon: '🟡',
-        title: 'PENDING INVOICE ISSUANCE',
-        msg: `${uninvoiced.length} payment request(s) are pending VAT invoice issuance. Monitor closely — deadline is day 5–10 of current month.`
-      });
+      // Previous month relative to today
+      const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const prevYear  = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+      const prevMonthName = new Date(prevYear, prevMonth, 1)
+        .toLocaleDateString('en-US', {month:'long', year:'numeric'});
+      const latestMonthName = new Date(latestYear, latestMonth, 1)
+        .toLocaleDateString('en-US', {month:'long', year:'numeric'});
+
+      // Check if latest invoice covers last month
+      const invoicedLastMonth = (latestYear === prevYear && latestMonth === prevMonth)
+                              || (latestYear > prevYear)
+                              || (latestYear === prevYear && latestMonth > prevMonth);
+
+      if (!invoicedLastMonth && dayOfMonth >= 5) {
+        // Past day 5 of current month, still no invoice for last month
+        comments.push({
+          cls:'bad', icon:'🔴',
+          title:'DELAYED CLAIM APPROVAL',
+          msg:`As of day ${dayOfMonth} of this month, no VAT invoice has been issued for `
+            +`${prevMonthName} work. Latest invoice on record was in ${latestMonthName}. `
+            +`Invoice should be issued by day 5–10 of each month.`
+        });
+      } else if (!invoicedLastMonth && dayOfMonth < 5) {
+        // Before day 5 — still within window, just a reminder
+        comments.push({
+          cls:'warning', icon:'🟡',
+          title:'INVOICE DUE SOON',
+          msg:`No invoice recorded for ${prevMonthName} yet. `
+            +`Deadline is day 5–10 of this month. Latest invoice was in ${latestMonthName}.`
+        });
+      } else {
+        // Latest invoice covers last month or current month — up to date
+        comments.push({
+          cls:'good', icon:'🟢',
+          title:'CLAIM APPROVAL: UP TO DATE',
+          msg:`Latest VAT invoice was issued in ${latestMonthName} on ${fmtDateShort(latestInvoice)}. `
+            +`No delayed claims detected.`
+        });
+      }
     } else {
-      comments.push({
-        cls: 'good', icon: '🟢',
-        title: 'CLAIM APPROVAL: UP TO DATE',
-        msg: 'All payment requests have VAT invoices issued. No delayed claims detected.'
-      });
+      comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL',
+        msg:'Invoice date data could not be parsed. Please check date format in Receivable file.'});
+    }
+  } else if (ipcRows.length > 0) {
+    // Have IPC rows but none have invoice dates at all
+    const dayOfMonth = today.getDate();
+    const prevMonth  = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+    const prevYear   = today.getMonth() === 0 ? today.getFullYear()-1 : today.getFullYear();
+    const prevMonthName = new Date(prevYear, prevMonth, 1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    if (dayOfMonth >= 5) {
+      comments.push({cls:'bad', icon:'🔴', title:'DELAYED CLAIM APPROVAL',
+        msg:`${ipcRows.length} IPC row(s) found but no VAT invoice has ever been recorded for this project. `
+          +`As of day ${dayOfMonth}, invoice for ${prevMonthName} is overdue.`});
+    } else {
+      comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL',
+        msg:`No VAT invoice dates found in the data. Ensure the Receivable file includes column Q (Issued VAT invoice date).`});
     }
   } else {
-    comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL', msg:'No IPC detail data available. Import Receivable file to enable claim assessment.'});
+    comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL',
+      msg:'No IPC detail available. Import Receivable file to enable claim assessment.'});
   }
 
   // ──────────────────────────────────────────────────
-  // 3. PAYMENT STATUS (Due date vs Actual payment)
+  // 3. PAYMENT STATUS
+  //    Only check IPCs with dueDate set (real tracked claims)
   // ──────────────────────────────────────────────────
-  if (ipcRows.length > 0) {
+  const payIPCs = ipcRows.filter(r => r.dueDate);
+
+  if (payIPCs.length > 0) {
     const overdueItems = [];
-    const pendingItems = [];
+    const lateSettled  = [];
 
-    ipcRows.forEach(r => {
-      if (!r.dueDate || r.paymentReq <= 0) return;
-      const due     = parseExcelDate(r.dueDate);
-      const actual  = parseExcelDate(r.actualPayDate);
+    payIPCs.forEach(r => {
+      const due    = parseExcelDate(r.dueDate);
+      const actual = parseExcelDate(r.actualPayDate);
       if (!due) return;
+      const unpaid = (r.paymentReq || 0) - (r.received || 0);
 
-      const unpaid = r.paymentReq - r.received;
       if (actual) {
-        // Paid — check if late
         const lateDays = daysDiff(due, actual);
-        if (lateDays > 0) {
-          overdueItems.push({ipc: r.ipcNo, due, actual, lateDays, unpaid: 0, paid: true});
-        }
+        if (lateDays > 0) lateSettled.push({ipc:r.ipcNo, due, actual, lateDays});
       } else {
-        // Not yet paid
         const overdueDays = daysDiff(due, today);
-        if (overdueDays > 0) {
-          pendingItems.push({ipc: r.ipcNo, due, overdueDays, unpaid});
-        }
+        if (overdueDays > 0) overdueItems.push({ipc:r.ipcNo, due, overdueDays, unpaid});
       }
     });
 
-    if (pendingItems.length > 0) {
-      // Sort by most overdue
-      pendingItems.sort((a,b) => b.overdueDays - a.overdueDays);
-      const worst = pendingItems[0];
-      const totalUnpaid = pendingItems.reduce((s,r) => s+r.unpaid, 0);
+    if (overdueItems.length > 0) {
+      overdueItems.sort((a,b) => b.overdueDays - a.overdueDays);
+      const worst = overdueItems[0];
+      const totalUnpaid = overdueItems.reduce((s,r)=>s+(r.unpaid||0),0);
       const fUnpaid = totalUnpaid >= 1e6 ? (totalUnpaid/1e9).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' Bil VND' : '';
       comments.push({
         cls: worst.overdueDays > 30 ? 'bad' : 'warning',
         icon: worst.overdueDays > 30 ? '🔴' : '🟡',
-        title: 'OVERDUE PAYMENT',
-        msg: `${pendingItems.length} payment request(s) are overdue. Most critical: IPC ${worst.ipc||'—'} was due ${fmtDateShort(worst.due)} — overdue by ${worst.overdueDays} day(s).`
-          + (fUnpaid ? ` Total outstanding: ${fUnpaid}.` : '')
+        title:'OVERDUE PAYMENT',
+        msg:`${overdueItems.length} payment request(s) are overdue. Most critical: `
+          +`${worst.ipc||'IPC'} was due ${fmtDateShort(worst.due)} — overdue by ${worst.overdueDays} day(s).`
+          +(fUnpaid ? ` Total outstanding: ${fUnpaid}.` : '')
       });
-    } else if (overdueItems.length > 0) {
-      comments.push({
-        cls: 'warning', icon: '🟡',
-        title: 'LATE PAYMENTS (SETTLED)',
-        msg: `${overdueItems.length} payment(s) were received late. All currently settled but client has a history of delayed payments — monitor future deadlines.`
-      });
-    } else if (ipcRows.some(r => r.dueDate)) {
-      comments.push({
-        cls: 'good', icon: '🟢',
-        title: 'PAYMENT STATUS: CURRENT',
-        msg: 'All payment requests are within due date or have been received on time. No overdue payments detected.'
-      });
+    } else if (lateSettled.length > 0) {
+      const worst = lateSettled.sort((a,b)=>b.lateDays-a.lateDays)[0];
+      comments.push({cls:'warning', icon:'🟡', title:'LATE PAYMENTS (SETTLED)',
+        msg:`All payments received, but ${lateSettled.length} were paid late. Latest delay: ${worst.ipc||'IPC'} — ${worst.lateDays} days late. Monitor future deadlines.`});
     } else {
-      comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS', msg:'No due date data available for payment assessment.'});
+      comments.push({cls:'good', icon:'🟢', title:'PAYMENT STATUS: CURRENT',
+        msg:'All tracked payments are within due date or received on time. No overdue payments.'});
     }
+  } else if (ipcRows.length > 0) {
+    comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS',
+      msg:'IPC data available but no due dates found. No payment deadlines to track.'});
   } else {
-    comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS', msg:'No IPC detail data available. Import Receivable file to enable payment assessment.'});
+    comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS',
+      msg:'No IPC detail available. Import Receivable file to enable payment assessment.'});
   }
 
   // ── Render ──
@@ -2728,6 +2769,7 @@ function generateAssessment(proj) {
     </div>`
   ).join('');
 }
+
 
 // ═══════════════════ PDF EXPORT ═══════════════════
 function exportPDF() {
