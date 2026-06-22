@@ -144,14 +144,7 @@
   select.project-select:focus { border-color: var(--gold); }
 
   /* NOTE ROW */
-  .pmr-note {
-    padding: 6px 20px;
-    background: #FFF8E7;
-    font-size: 12px;
-    color: #7A6020;
-    border-bottom: 1px solid #F0DFA0;
-    font-style: italic;
-  }
+
 
   /* SECTION TABLE */
   .pmr-section {
@@ -689,7 +682,6 @@
       </div>
     </div>
 
-    <div class="pmr-note" id="pmr-note" style="display:none">Gồm tạm ứng thép</div>
 
     <!-- I. PROJECT SCHEDULE -->
     <div class="pmr-section">
@@ -1341,7 +1333,6 @@ function onProjectChange() {
 
   // E4 - Code
   document.getElementById('e4-code').textContent = proj.code || '—';
-  document.getElementById('pmr-note').style.display = 'block';
 
   // E9 - Starting date (Col C)
   document.getElementById('e9-start').textContent = fmtDate(proj.startDate);
@@ -1444,7 +1435,6 @@ function clearPMR() {
   document.getElementById('f13-dur').textContent = '—';
   document.getElementById('f14-actual').textContent = '—';
   document.getElementById('g14-pct').textContent = '—';
-  document.getElementById('pmr-note').style.display = 'none';
   ['f17','f18','f19','f21','f25','f26','f30','f31','f35','f36','f40','f41'].forEach(id => {
     pmrData[id] = 0;
     const el = document.getElementById(id);
