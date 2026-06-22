@@ -1754,18 +1754,23 @@ function importReceivable(wb, fname) {
     accum[name].workdoneExcl    += toNum(r[5]);
     accum[name].paymentReq      += toNum(r[11]);
     accum[name].received        += toNum(r[12]);
-    // Store per-IPC detail for assessment
-    const fmtD = v => !v ? null : (v instanceof Date ? v.toISOString() : String(v));
-    accum[name].ipcRows.push({
-      ipcNo:         String(r[2]||'').trim(),
-      paymentReq:    toNum(r[11]),
-      received:      toNum(r[12]),
-      invoiceDate:   fmtD(r[16]),
-      paymentDays:   toNum(r[17]),
-      dueDate:       fmtD(r[18]),
-      actualPayDate: fmtD(r[19]),
-      overdueDays:   toNum(r[20]),
-    });
+
+    // Skip advance rows for IPC tracking (col C contains "advance")
+    const ipcNo = String(r[2]||'').trim();
+    const isAdvance = ipcNo.toLowerCase().includes('advance');
+    if (!isAdvance) {
+      const fmtD = v => !v ? null : (v instanceof Date ? v.toISOString() : String(v));
+      accum[name].ipcRows.push({
+        ipcNo:         ipcNo,
+        paymentReq:    toNum(r[11]),
+        received:      toNum(r[12]),
+        invoiceDate:   fmtD(r[16]),
+        paymentDays:   toNum(r[17]),
+        dueDate:       fmtD(r[18]),
+        actualPayDate: fmtD(r[19]),
+        overdueDays:   toNum(r[20]),
+      });
+    }
   });
 
   const projectCount = Object.keys(accum).length;
@@ -1784,7 +1789,8 @@ function importReceivable(wb, fname) {
   });
 
   const totalRows = dataRows.filter(r => String(r[0]||'').trim()).length;
-  setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}" — ${ipcWithDates} IPC có date data`, true);
+  const advanceRows = dataRows.filter(r => String(r[2]||'').toLowerCase().includes('advance')).length;
+  setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}" — ${ipcWithDates} IPC có date data (bỏ qua ${advanceRows} dòng advance)`, true);
   autoCloudPush('Receivable');
   onProjectChange();
 }
@@ -2647,7 +2653,19 @@ function generateAssessment(proj) {
   //    from 2+ months ago (i.e., nothing invoiced last month) → alert.
   //    If latest invoice is from last month → OK.
   //    If no invoice data at all → neutral.
+  //    EXCEPTION: if workPct >= 90% → project in settlement phase, skip alert.
   // ──────────────────────────────────────────────────
+  const workPctForClaim = contractExcl > 0 ? (workdone / contractExcl) * 100 : 0;
+  const isSettlement = workPctForClaim >= 90;
+
+  if (isSettlement) {
+    comments.push({
+      cls: 'neutral', icon: '📋',
+      title: 'CLAIM APPROVAL: SETTLEMENT PHASE',
+      msg: `Work progress is at ${workPctForClaim.toFixed(1)}% — project is in final settlement stage. `
+        + `Monthly invoice tracking is not applicable at this phase.`
+    });
+  } else {
   const invoicedRows = ipcRows.filter(r => r.invoiceDate && r.invoiceDate !== '' && r.invoiceDate !== 0);
 
   if (invoicedRows.length > 0) {
@@ -2737,6 +2755,7 @@ function generateAssessment(proj) {
         : ''
     });
   }
+  } // end isSettlement else
 
   // ──────────────────────────────────────────────────
   // 3. PAYMENT STATUS
