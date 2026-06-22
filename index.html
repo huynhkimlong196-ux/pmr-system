@@ -34,11 +34,12 @@
   .app-header {
     background: linear-gradient(135deg, var(--navy) 0%, var(--steel) 100%);
     color: var(--white);
-    padding: 14px 28px;
+    padding: 10px 20px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     border-bottom: 3px solid var(--gold);
+    flex-wrap: wrap;
   }
   .app-header .logo {
     font-size: 22px;
@@ -49,20 +50,23 @@
   .app-header .logo span { color: var(--gold); }
   .tab-bar {
     display: flex;
-    gap: 4px;
+    gap: 3px;
     margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   .tab-btn {
-    padding: 7px 20px;
+    padding: 6px 14px;
     border: none;
     border-radius: 4px 4px 0 0;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     background: rgba(255,255,255,0.12);
     color: rgba(255,255,255,0.75);
     transition: all 0.15s;
     letter-spacing: 0.02em;
+    white-space: nowrap;
   }
   .tab-btn.active {
     background: var(--white);
@@ -1012,6 +1016,8 @@
       <div class="comment-header">
         <span>🤖</span> Auto Assessment
         <span style="margin-left:auto;font-size:10px;font-weight:400;opacity:0.7;" id="comment-date"></span>
+        <button onclick="refreshAssessment()" title="Refresh assessment"
+          style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:3px;cursor:pointer;font-size:10px;margin-left:8px;">↻ Refresh</button>
       </div>
       <div class="comment-body" id="comment-body">
         <div class="comment-empty">Select a project to see assessment</div>
@@ -2701,8 +2707,15 @@ function generateAssessment(proj) {
         msg:`No VAT invoice dates found in the data. Ensure the Receivable file includes column Q (Issued VAT invoice date).`});
     }
   } else {
-    comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL',
-      msg:'No IPC detail available. Import Receivable file to enable claim assessment.'});
+    // Check if receivable data exists but ipcRows missing (old import without ipcRows)
+    const hasRecvData = recv && (recv.contractExclVAT || recv.receivable);
+    comments.push({cls: hasRecvData ? 'warning' : 'neutral',
+      icon: hasRecvData ? '⚠️' : 'ℹ️',
+      title:'CLAIM APPROVAL',
+      msg: hasRecvData
+        ? 'Receivable data found but IPC detail is missing — please re-import the Receivable file to enable this assessment.'
+        : 'No IPC detail available. Import Receivable file to enable claim assessment.'
+    });
   }
 
   // ──────────────────────────────────────────────────
@@ -2755,8 +2768,14 @@ function generateAssessment(proj) {
     comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS',
       msg:'IPC data available but no due dates found. No payment deadlines to track.'});
   } else {
-    comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS',
-      msg:'No IPC detail available. Import Receivable file to enable payment assessment.'});
+    const hasRecvData2 = recv && (recv.contractExclVAT || recv.receivable);
+    comments.push({cls: hasRecvData2 ? 'warning' : 'neutral',
+      icon: hasRecvData2 ? '⚠️' : 'ℹ️',
+      title:'PAYMENT STATUS',
+      msg: hasRecvData2
+        ? 'Receivable data found but IPC detail is missing — please re-import the Receivable file to enable this assessment.'
+        : 'No IPC detail available. Import Receivable file to enable payment assessment.'
+    });
   }
 
   // ── Render ──
@@ -2798,6 +2817,14 @@ function setPdfBtnState(enabled) {
   } else if (toolbar) {
     toolbar.textContent = 'Select a project to generate report';
   }
+}
+
+// ═══════════════════ ASSESSMENT REFRESH ═══════════════════
+function refreshAssessment() {
+  const name = document.getElementById('projectSelect').value;
+  if (!name) { toast('Please select a project first'); return; }
+  const proj = state.projects.find(p => p.name === name);
+  if (proj) generateAssessment(proj);
 }
 
 // ═══════════════════ TOAST ═══════════════════
