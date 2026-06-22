@@ -1121,23 +1121,18 @@
         ☁ Supabase — Cấu hình Cloud Database
       </div>
       <div class="email-fields">
-        <div style="background:#EAF2FF;border:1px solid #B8D4F0;border-radius:4px;padding:10px 14px;font-size:12px;color:#1B3A5C;line-height:1.8;">
-          📌 Đăng ký miễn phí tại <a href="https://supabase.com" target="_blank" style="color:var(--accent);font-weight:600;">supabase.com</a>
-          → Tạo project → vào <strong>Settings → API</strong> → copy 2 thông tin bên dưới.<br>
-          Sau khi kết nối, tất cả import data sẽ <strong>lưu chung</strong> và mọi người dùng đều thấy.
+        <div style="background:#E8F5EE;border:1px solid #A8D5B8;border-radius:4px;padding:10px 14px;font-size:12px;color:#1B5E35;line-height:1.8;">
+          ✅ <strong>Đã kết nối Supabase tự động</strong> — mọi import data sẽ lưu chung lên cloud.<br>
+          Khi mở web, data cloud được <strong>tự động tải về</strong>. Nhấn Pull để lấy data mới nhất bất kỳ lúc nào.
         </div>
-        <div class="email-field">
-          <label>Project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxxxxxx.supabase.co" oninput="saveSbConfig()">
+        <!-- Hidden fields for admin use -->
+        <div style="display:none;">
+          <input type="text" id="sb-url" value="https://nqvgxrqjtxtswpoattay.supabase.co">
+          <input type="text" id="sb-key">
         </div>
-        <div class="email-field">
-          <label>Anon Key</label>
-          <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="saveSbConfig()">
-        </div>
-        <div style="padding:0 0 10px 82px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="btn btn-primary" style="padding:5px 16px;" onclick="initSupabase()">🔗 Kết nối</button>
-          <button class="btn btn-success" style="padding:5px 16px;" onclick="setupSupabaseTables()">🗄 Tạo Tables</button>
-          <button class="btn btn-outline" style="padding:5px 16px;" onclick="pullFromCloud()">⬇ Pull data từ cloud</button>
+        <div style="padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-outline" style="padding:5px 16px;" onclick="pullFromCloud()">⬇ Pull data mới nhất</button>
+          <button class="btn btn-success" style="padding:5px 16px;" onclick="setupSupabaseTables()">🗄 Tạo Tables (Admin)</button>
           <span id="sb-status" style="font-size:12px;"></span>
         </div>
       </div>
@@ -1184,6 +1179,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
+// ═══════════════════ SUPABASE CONFIG (hardcoded) ═══════════════════
+const SUPABASE_URL = 'https://nqvgxrqjtxtswpoattay.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xdmd4cnFqdHh0c3dwb2F0dGF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwOTYxMzksImV4cCI6MjA5NzY3MjEzOX0.nYzULWFt_Wb_NiscETerhsnY5s1IjU-wIJiRCJGiw0I';
+
 // ═══════════════════ STATE ═══════════════════
 const state = {
   projects: [], // [{name, code, startDate, contractEnd, appendixEnd}]
@@ -2209,12 +2208,20 @@ function saveSbConfig() {
 }
 
 function loadSbConfig() {
+  // Use hardcoded credentials — no user input needed
+  const url = SUPABASE_URL;
+  const key = SUPABASE_KEY;
+  // Fill UI fields if present
+  const urlEl = document.getElementById('sb-url');
+  const keyEl = document.getElementById('sb-key');
+  if (urlEl) urlEl.value = url;
+  if (keyEl) keyEl.value = key;
+  // Auto-connect silently
   try {
-    const cfg = JSON.parse(localStorage.getItem('pmr_sb_config') || '{}');
-    if (cfg.url) document.getElementById('sb-url').value = cfg.url;
-    if (cfg.key) document.getElementById('sb-key').value = cfg.key;
-    if (cfg.url && cfg.key) initSupabase(true); // auto-connect silently
-  } catch(e) {}
+    sbClient = window.supabase.createClient(url, key);
+    // Auto-pull data on page load
+    pullFromCloud();
+  } catch(e) { console.warn('Supabase auto-connect failed:', e.message); }
 }
 
 function setSbStatus(msg, ok, warn) {
@@ -2225,12 +2232,12 @@ function setSbStatus(msg, ok, warn) {
 }
 
 function initSupabase(silent) {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
-  if (!url || !key) { if (!silent) setSbStatus('⚠ Vui lòng điền URL và Anon Key', false); return false; }
+  const urlEl = document.getElementById('sb-url');
+  const keyEl = document.getElementById('sb-key');
+  const url = (urlEl && urlEl.value.trim()) || SUPABASE_URL;
+  const key = (keyEl && keyEl.value.trim()) || SUPABASE_KEY;
   try {
     sbClient = window.supabase.createClient(url, key);
-    saveSbConfig();
     if (!silent) { setSbStatus('✓ Kết nối Supabase thành công!', true); toast('☁ Đã kết nối Supabase'); }
     updateCloudDataInfo();
     return true;
