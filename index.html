@@ -1736,29 +1736,42 @@ function importPL(wb, fname) {
 }
 
 function importReceivable(wb, fname) {
-  // Template: sheet "Receivable", row 5 = header, data from row 6
   const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('receivable')) || wb.SheetNames[0];
   const ws = wb.Sheets[sheetName];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
-
-  // Row index 4 = Excel row 5 = header; data starts at index 5 (Excel row 6)
   const dataRows = rows.slice(5);
 
-  // SUMIF by col A (index 0) — accumulate across multiple rows per project
   const accum = {};
   dataRows.forEach(r => {
     const name = String(r[0]||'').trim();
     if (!name) return;
-    if (!accum[name]) accum[name] = {contractExclVAT:0, contractInclVAT:0, workdoneExcl:0, paymentReq:0, received:0};
-    accum[name].contractExclVAT += toNum(r[3]);   // col D: Contract excl. VAT
-    accum[name].contractInclVAT += toNum(r[4]);   // col E: Contract incl. VAT
-    accum[name].workdoneExcl    += toNum(r[5]);   // col F: Workdone excl. VAT
-    accum[name].paymentReq      += toNum(r[11]);  // col L: Payment Request (Receivable)
-    accum[name].received        += toNum(r[12]);  // col M: Received from client
+    if (!accum[name]) accum[name] = {
+      contractExclVAT:0, contractInclVAT:0, workdoneExcl:0, paymentReq:0, received:0,
+      ipcRows: []
+    };
+    accum[name].contractExclVAT += toNum(r[3]);
+    accum[name].contractInclVAT += toNum(r[4]);
+    accum[name].workdoneExcl    += toNum(r[5]);
+    accum[name].paymentReq      += toNum(r[11]);
+    accum[name].received        += toNum(r[12]);
+    // Store per-IPC detail for assessment
+    const fmtD = v => !v ? null : (v instanceof Date ? v.toISOString() : String(v));
+    accum[name].ipcRows.push({
+      ipcNo:         String(r[2]||'').trim(),
+      paymentReq:    toNum(r[11]),
+      received:      toNum(r[12]),
+      invoiceDate:   fmtD(r[16]),
+      paymentDays:   toNum(r[17]),
+      dueDate:       fmtD(r[18]),
+      actualPayDate: fmtD(r[19]),
+      overdueDays:   toNum(r[20]),
+    });
   });
 
   const projectCount = Object.keys(accum).length;
+  let ipcWithDates = 0;
   Object.entries(accum).forEach(([name, v]) => {
+    ipcWithDates += v.ipcRows.filter(r => r.invoiceDate || r.dueDate).length;
     state.importedData.receivable[name] = {
       contractExclVAT:  v.contractExclVAT,
       totalInclVAT:     v.contractInclVAT,
@@ -1766,11 +1779,12 @@ function importReceivable(wb, fname) {
       receivable:       v.paymentReq,
       received:         v.received,
       vat:              v.contractInclVAT - v.contractExclVAT,
+      ipcRows:          v.ipcRows,
     };
   });
 
   const totalRows = dataRows.filter(r => String(r[0]||'').trim()).length;
-  setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}"`, true);
+  setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}" — ${ipcWithDates} IPC có date data`, true);
   autoCloudPush('Receivable');
   onProjectChange();
 }
