@@ -636,9 +636,139 @@
   }
   .toast.show { opacity: 1; transform: translateY(0); }
 
+  /* ── AUTO COMMENT BOX ── */
+  .comment-box {
+    border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px;
+    overflow: hidden;
+  }
+  .comment-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 8px 20px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .comment-body {
+    padding: 14px 20px;
+    background: #FAFBFD;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .comment-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    border-radius: 5px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .comment-item.good    { background: #E8F5EE; border-left: 4px solid #1B7A4A; }
+  .comment-item.warning { background: #FFF8E7; border-left: 4px solid #E8B84B; }
+  .comment-item.bad     { background: #FEF0EF; border-left: 4px solid #C0392B; }
+  .comment-item.neutral { background: #EAF2FF; border-left: 4px solid #2E86AB; }
+  .comment-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .comment-text { flex: 1; }
+  .comment-text strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .comment-empty { color: var(--muted); font-size: 12px; font-style: italic; padding: 10px 0; text-align: center; }
+
   @media (max-width: 700px) {
     .import-grid { grid-template-columns: 1fr; }
     .pmr-meta { grid-template-columns: 1fr; }
+  }
+
+  /* ── PDF TOOLBAR ── */
+  .pdf-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 8px 0;
+  }
+  #pdf-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── PRINT / PDF STYLES ── */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 12mm 14mm 12mm 14mm;
+    }
+    /* Hide everything except the PMR report */
+    body { background: #fff !important; }
+    .app-header, .pdf-toolbar, .no-print { display: none !important; }
+    .panel { display: none !important; padding: 0 !important; }
+    #tab-pmr { display: block !important; padding: 0 !important; }
+
+    /* PMR wrap full width */
+    .pmr-wrap {
+      max-width: 100% !important;
+      width: 100% !important;
+      box-shadow: none !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
+
+    /* Keep colors in print */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Title bar */
+    .pmr-title-bar {
+      background: #0D1B2A !important;
+      color: #fff !important;
+      padding: 10px 16px !important;
+      font-size: 14px !important;
+    }
+
+    /* Meta grid side by side */
+    .pmr-meta { grid-template-columns: 1fr 1fr !important; }
+
+    /* Section headers */
+    .section-header {
+      background: #0D1B2A !important;
+      color: #fff !important;
+      padding: 6px 16px !important;
+      font-size: 10px !important;
+    }
+    .section-num {
+      background: #E8B84B !important;
+      color: #0D1B2A !important;
+    }
+
+    /* Tables */
+    .pmr-table td { padding: 5px 14px !important; font-size: 11px !important; }
+    .td-label, .td-label.sub { padding-left: 22px !important; }
+    .td-value-display { padding: 4px 0 !important; font-size: 11px !important; }
+
+    /* Row colours */
+    .pmr-table tr:nth-child(even) td { background: #EEF3F8 !important; }
+    .row-total td { background: #EAF2FF !important; border-top: 2px solid #2E86AB !important; }
+    .row-balance td { background: #E8F5EE !important; border-top: 2px solid #1B7A4A !important; }
+    .row-balance.negative td { background: #FEF0EF !important; border-top-color: #C0392B !important; }
+    .row-result td { background: #FFF8E7 !important; border-top: 2px solid #E8B84B !important; }
+
+    /* Comment box */
+    .comment-box { border: 1px solid #D0D8E4 !important; margin-top: 10px !important; border-radius: 4px !important; }
+    .comment-header { background: #0D1B2A !important; color: #fff !important; padding: 6px 16px !important; font-size: 10px !important; }
+    .comment-item { padding: 7px 12px !important; font-size: 10.5px !important; break-inside: avoid !important; }
+    .comment-item.good    { background: #E8F5EE !important; border-left: 4px solid #1B7A4A !important; }
+    .comment-item.warning { background: #FFF8E7 !important; border-left: 4px solid #E8B84B !important; }
+    .comment-item.bad     { background: #FEF0EF !important; border-left: 4px solid #C0392B !important; }
+    .comment-item.neutral { background: #EAF2FF !important; border-left: 4px solid #2E86AB !important; }
+    .comment-text { font-size: 10.5px !important; line-height: 1.5 !important; }
+
+    /* Avoid page breaks inside sections */
+    .pmr-section { break-inside: avoid !important; }
+    .comment-body { break-inside: avoid !important; }
+
+    /* Column header rows */
+    tr[style*="background:#EEF3F8"] td { background: #EEF3F8 !important; font-size: 9px !important; }
   }
 </style>
 </head>
@@ -657,7 +787,17 @@
 
 <!-- ══════════════ PMR REPORT ══════════════ -->
 <div id="tab-pmr" class="panel active">
-  <div class="pmr-wrap">
+  <!-- PDF export toolbar — hidden in print -->
+  <div class="pdf-toolbar no-print">
+    <div style="font-size:12px;color:var(--muted);">Select a project to generate report</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-primary" onclick="exportPDF()" id="pdf-btn" disabled style="display:flex;align-items:center;gap:6px;padding:7px 18px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+        Export PDF
+      </button>
+    </div>
+  </div>
+  <div class="pmr-wrap" id="pmr-print-area">
     <div class="pmr-title-bar">PROJECT MANAGEMENT REPORT</div>
 
     <!-- Meta header -->
@@ -865,6 +1005,17 @@
           <td class="td-pct"></td>
         </tr>
       </table>
+    </div>
+
+    <!-- AUTO COMMENT BOX -->
+    <div class="comment-box" id="comment-box" style="display:none;">
+      <div class="comment-header">
+        <span>🤖</span> Auto Assessment
+        <span style="margin-left:auto;font-size:10px;font-weight:400;opacity:0.7;" id="comment-date"></span>
+      </div>
+      <div class="comment-body" id="comment-body">
+        <div class="comment-empty">Select a project to see assessment</div>
+      </div>
     </div>
 
   </div>
@@ -1324,6 +1475,7 @@ function populateDropdown() {
 
 function onProjectChange() {
   const name = document.getElementById('projectSelect').value;
+  setPdfBtnState(!!name);
   if (!name) {
     clearPMR(); return;
   }
@@ -1346,6 +1498,8 @@ function onProjectChange() {
   // Pull imported data
   fillImportedData(proj);
   recalc();
+  // Auto assessment
+  generateAssessment(proj);
 }
 
 function calcSchedule(proj) {
@@ -1439,6 +1593,9 @@ function clearPMR() {
     const el = document.getElementById(id);
     if (el) el.textContent = '—';
   });
+  const cb = document.getElementById('comment-box');
+  if (cb) cb.style.display = 'none';
+  setPdfBtnState(false);
   recalc();
 }
 
@@ -2364,6 +2521,241 @@ async function autoCloudPush(label) {
     await pushToCloud();
     toast('☁ ' + label + ' đã lưu lên cloud');
   } catch(e) { console.warn('Auto cloud push failed:', e.message); }
+}
+
+// ═══════════════════ AUTO ASSESSMENT ═══════════════════
+
+function parseExcelDate(v) {
+  if (!v) return null;
+  if (v instanceof Date) return v;
+  if (typeof v === 'number') {
+    // Excel serial date
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return isNaN(d) ? null : d;
+  }
+  if (typeof v === 'string') {
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  }
+  return null;
+}
+
+function daysDiff(a, b) {
+  // b - a in days
+  return Math.round((b - a) / (1000 * 60 * 60 * 24));
+}
+
+function fmtDateShort(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+function generateAssessment(proj) {
+  const box   = document.getElementById('comment-box');
+  const body  = document.getElementById('comment-body');
+  const label = document.getElementById('comment-date');
+  if (!box || !body) return;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const comments = [];
+
+  // ── Get data ──
+  const recvKey = Object.keys(state.importedData.receivable).find(k => k.toLowerCase() === proj.name.toLowerCase()) || proj.name;
+  const recv    = state.importedData.receivable[recvKey] || {};
+  const ipcRows = recv.ipcRows || [];
+  const contractExcl = recv.contractExclVAT || 0;
+  const workdone     = recv.approvedWorkdone || 0;
+
+  // ──────────────────────────────────────────────────
+  // 1. SCHEDULE ASSESSMENT
+  // ──────────────────────────────────────────────────
+  const startDate = proj.startDate ? new Date(proj.startDate) : null;
+  const endDate   = proj.appendixEnd ? new Date(proj.appendixEnd) : (proj.contractEnd ? new Date(proj.contractEnd) : null);
+  if (startDate && endDate && contractExcl > 0) {
+    startDate.setHours(0,0,0,0);
+    endDate.setHours(0,0,0,0);
+    const totalDays   = daysDiff(startDate, endDate);
+    const elapsedDays = Math.min(daysDiff(startDate, today), totalDays);
+    const timePct     = totalDays > 0 ? (elapsedDays / totalDays) * 100 : 0;
+    const workPct     = contractExcl > 0 ? (workdone / contractExcl) * 100 : 0;
+    const gap         = workPct - timePct;
+    const daysLeft    = daysDiff(today, endDate);
+
+    let schedClass, schedIcon, schedTitle, schedMsg;
+    if (daysLeft < 0) {
+      // Already past deadline
+      schedClass = 'bad'; schedIcon = '🔴';
+      schedTitle = 'OVERDUE PROJECT';
+      schedMsg = `Project completion deadline was ${fmtDateShort(endDate)} (${Math.abs(daysLeft)} days ago). `
+        + `Time elapsed: ${timePct.toFixed(1)}% | Work approved: ${workPct.toFixed(1)}%.`;
+    } else if (gap >= 5) {
+      schedClass = 'good'; schedIcon = '🟢';
+      schedTitle = 'AHEAD OF SCHEDULE';
+      schedMsg = `Work progress (${workPct.toFixed(1)}%) is ahead of time elapsed (${timePct.toFixed(1)}%) by ${gap.toFixed(1)} percentage points. ${daysLeft} days remaining.`;
+    } else if (gap >= -5) {
+      schedClass = 'neutral'; schedIcon = '🔵';
+      schedTitle = 'ON SCHEDULE';
+      schedMsg = `Work progress (${workPct.toFixed(1)}%) is in line with time elapsed (${timePct.toFixed(1)}%). ${daysLeft} days remaining.`;
+    } else if (gap >= -15) {
+      schedClass = 'warning'; schedIcon = '🟡';
+      schedTitle = 'SLIGHTLY BEHIND SCHEDULE';
+      schedMsg = `Work progress (${workPct.toFixed(1)}%) is lagging behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} percentage points. ${daysLeft} days remaining — action required.`;
+    } else {
+      schedClass = 'bad'; schedIcon = '🔴';
+      schedTitle = 'SIGNIFICANTLY BEHIND SCHEDULE';
+      schedMsg = `Work progress (${workPct.toFixed(1)}%) is significantly behind time elapsed (${timePct.toFixed(1)}%) by ${Math.abs(gap).toFixed(1)} percentage points. Only ${daysLeft} days remaining — immediate action required.`;
+    }
+    comments.push({cls: schedClass, icon: schedIcon, title: schedTitle, msg: schedMsg});
+  } else {
+    comments.push({cls:'neutral', icon:'ℹ️', title:'SCHEDULE', msg:'Insufficient data to assess schedule (missing start/end date or contract value).'});
+  }
+
+  // ──────────────────────────────────────────────────
+  // 2. CLAIM APPROVAL STATUS (Invoice date check)
+  // ──────────────────────────────────────────────────
+  if (ipcRows.length > 0) {
+    // Find IPCs where invoice has NOT been issued (invoiceDate is empty) and paymentReq > 0
+    const currentMonth = today.getMonth();
+    const currentYear  = today.getFullYear();
+    const dayOfMonth   = today.getDate();
+
+    // Get last month label
+    const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+    const lastMonthName = lastMonthDate.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+
+    const uninvoiced = ipcRows.filter(r => {
+      const hasReq = r.paymentReq > 0;
+      const noInvoice = !r.invoiceDate || r.invoiceDate === '' || r.invoiceDate === 0;
+      return hasReq && noInvoice;
+    });
+
+    if (uninvoiced.length > 0 && dayOfMonth >= 5) {
+      // Past day 5 of month but previous month work not yet invoiced
+      const ipcList = uninvoiced.map(r => r.ipcNo).filter(Boolean).join(', ') || `${uninvoiced.length} IPC(s)`;
+      comments.push({
+        cls: 'bad', icon: '🔴',
+        title: 'DELAYED CLAIM APPROVAL',
+        msg: `As of today (day ${dayOfMonth} of ${today.toLocaleDateString('en-US',{month:'long',year:'numeric'})}), `
+          + `${uninvoiced.length} payment request(s) (${ipcList}) have not yet had VAT invoices issued for work done in ${lastMonthName}. `
+          + `Invoices should be issued by day 5–10 of each month.`
+      });
+    } else if (uninvoiced.length > 0) {
+      comments.push({
+        cls: 'warning', icon: '🟡',
+        title: 'PENDING INVOICE ISSUANCE',
+        msg: `${uninvoiced.length} payment request(s) are pending VAT invoice issuance. Monitor closely — deadline is day 5–10 of current month.`
+      });
+    } else {
+      comments.push({
+        cls: 'good', icon: '🟢',
+        title: 'CLAIM APPROVAL: UP TO DATE',
+        msg: 'All payment requests have VAT invoices issued. No delayed claims detected.'
+      });
+    }
+  } else {
+    comments.push({cls:'neutral', icon:'ℹ️', title:'CLAIM APPROVAL', msg:'No IPC detail data available. Import Receivable file to enable claim assessment.'});
+  }
+
+  // ──────────────────────────────────────────────────
+  // 3. PAYMENT STATUS (Due date vs Actual payment)
+  // ──────────────────────────────────────────────────
+  if (ipcRows.length > 0) {
+    const overdueItems = [];
+    const pendingItems = [];
+
+    ipcRows.forEach(r => {
+      if (!r.dueDate || r.paymentReq <= 0) return;
+      const due     = parseExcelDate(r.dueDate);
+      const actual  = parseExcelDate(r.actualPayDate);
+      if (!due) return;
+
+      const unpaid = r.paymentReq - r.received;
+      if (actual) {
+        // Paid — check if late
+        const lateDays = daysDiff(due, actual);
+        if (lateDays > 0) {
+          overdueItems.push({ipc: r.ipcNo, due, actual, lateDays, unpaid: 0, paid: true});
+        }
+      } else {
+        // Not yet paid
+        const overdueDays = daysDiff(due, today);
+        if (overdueDays > 0) {
+          pendingItems.push({ipc: r.ipcNo, due, overdueDays, unpaid});
+        }
+      }
+    });
+
+    if (pendingItems.length > 0) {
+      // Sort by most overdue
+      pendingItems.sort((a,b) => b.overdueDays - a.overdueDays);
+      const worst = pendingItems[0];
+      const totalUnpaid = pendingItems.reduce((s,r) => s+r.unpaid, 0);
+      const fUnpaid = totalUnpaid >= 1e6 ? (totalUnpaid/1e9).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' Bil VND' : '';
+      comments.push({
+        cls: worst.overdueDays > 30 ? 'bad' : 'warning',
+        icon: worst.overdueDays > 30 ? '🔴' : '🟡',
+        title: 'OVERDUE PAYMENT',
+        msg: `${pendingItems.length} payment request(s) are overdue. Most critical: IPC ${worst.ipc||'—'} was due ${fmtDateShort(worst.due)} — overdue by ${worst.overdueDays} day(s).`
+          + (fUnpaid ? ` Total outstanding: ${fUnpaid}.` : '')
+      });
+    } else if (overdueItems.length > 0) {
+      comments.push({
+        cls: 'warning', icon: '🟡',
+        title: 'LATE PAYMENTS (SETTLED)',
+        msg: `${overdueItems.length} payment(s) were received late. All currently settled but client has a history of delayed payments — monitor future deadlines.`
+      });
+    } else if (ipcRows.some(r => r.dueDate)) {
+      comments.push({
+        cls: 'good', icon: '🟢',
+        title: 'PAYMENT STATUS: CURRENT',
+        msg: 'All payment requests are within due date or have been received on time. No overdue payments detected.'
+      });
+    } else {
+      comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS', msg:'No due date data available for payment assessment.'});
+    }
+  } else {
+    comments.push({cls:'neutral', icon:'ℹ️', title:'PAYMENT STATUS', msg:'No IPC detail data available. Import Receivable file to enable payment assessment.'});
+  }
+
+  // ── Render ──
+  box.style.display = 'block';
+  label.textContent = 'As of ' + today.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  body.innerHTML = comments.map(c =>
+    `<div class="comment-item ${c.cls}">
+      <div class="comment-icon">${c.icon}</div>
+      <div class="comment-text"><strong>${c.title}</strong>${c.msg}</div>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════ PDF EXPORT ═══════════════════
+function exportPDF() {
+  const projName = document.getElementById('projectSelect').value;
+  if (!projName) { toast('Please select a project first'); return; }
+
+  // Set document title for PDF filename
+  const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'-');
+  const oldTitle = document.title;
+  document.title = `PMR_${projName.replace(/[^a-zA-Z0-9]/g,'_')}_${today}`;
+
+  // Trigger print dialog (browser saves as PDF)
+  window.print();
+
+  // Restore title
+  setTimeout(() => { document.title = oldTitle; }, 1000);
+}
+
+function setPdfBtnState(enabled) {
+  const btn = document.getElementById('pdf-btn');
+  if (btn) btn.disabled = !enabled;
+  const toolbar = document.querySelector('.pdf-toolbar div:first-child');
+  if (toolbar && enabled) {
+    const sel = document.getElementById('projectSelect');
+    toolbar.textContent = sel ? sel.value : '';
+  } else if (toolbar) {
+    toolbar.textContent = 'Select a project to generate report';
+  }
 }
 
 // ═══════════════════ TOAST ═══════════════════
