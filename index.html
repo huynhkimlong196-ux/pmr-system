@@ -658,6 +658,7 @@
     <button class="tab-btn" onclick="switchTab('pl')">Project List</button>
     <button class="tab-btn" onclick="switchTab('import')">Import Data</button>
     <button class="tab-btn" onclick="switchTab('email')">✉ Send Report</button>
+    <button class="tab-btn" onclick="switchTab('dbconfig')">☁ Cloud Sync</button>
   </div>
 </div>
 
@@ -1119,9 +1120,75 @@
   </div>
 </div>
 
+<!-- ══════════════ CLOUD SYNC ══════════════ -->
+<div id="tab-dbconfig" class="panel">
+  <div style="max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px;">
+
+    <div class="email-compose">
+      <div class="email-compose-header" style="background:linear-gradient(135deg,#1B3A5C,#2E86AB);">
+        ☁ Supabase — Cấu hình Cloud Database
+      </div>
+      <div class="email-fields">
+        <div style="background:#EAF2FF;border:1px solid #B8D4F0;border-radius:4px;padding:10px 14px;font-size:12px;color:#1B3A5C;line-height:1.8;">
+          📌 Đăng ký miễn phí tại <a href="https://supabase.com" target="_blank" style="color:var(--accent);font-weight:600;">supabase.com</a>
+          → Tạo project → vào <strong>Settings → API</strong> → copy 2 thông tin bên dưới.<br>
+          Sau khi kết nối, tất cả import data sẽ <strong>lưu chung</strong> và mọi người dùng đều thấy.
+        </div>
+        <div class="email-field">
+          <label>Project URL</label>
+          <input type="text" id="sb-url" placeholder="https://xxxxxxxx.supabase.co" oninput="saveSbConfig()">
+        </div>
+        <div class="email-field">
+          <label>Anon Key</label>
+          <input type="text" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." oninput="saveSbConfig()">
+        </div>
+        <div style="padding:0 0 10px 82px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" style="padding:5px 16px;" onclick="initSupabase()">🔗 Kết nối</button>
+          <button class="btn btn-success" style="padding:5px 16px;" onclick="setupSupabaseTables()">🗄 Tạo Tables</button>
+          <button class="btn btn-outline" style="padding:5px 16px;" onclick="pullFromCloud()">⬇ Pull data từ cloud</button>
+          <span id="sb-status" style="font-size:12px;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data management -->
+    <div class="email-compose">
+      <div class="email-compose-header">🗂 Quản lý Data Cloud</div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+        <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+          Khi import file Excel, data tự động lưu lên cloud.<br>
+          Tất cả người dùng pull về để lấy data mới nhất.
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="pushToCloud()">⬆ Push data lên cloud</button>
+          <button class="btn btn-outline" onclick="pullFromCloud()">⬇ Pull data về máy</button>
+          <button class="btn btn-danger" onclick="clearCloudData()">🗑 Xóa toàn bộ data cloud</button>
+        </div>
+        <div id="cloud-data-info" style="font-size:12px;color:var(--muted);background:var(--light-bg);border-radius:4px;padding:10px 14px;line-height:1.9;"></div>
+      </div>
+    </div>
+
+    <!-- How to guide -->
+    <div class="email-compose">
+      <div class="email-compose-header">📖 Hướng dẫn lấy Supabase credentials</div>
+      <div style="padding:14px 16px;font-size:12px;color:var(--muted);line-height:2;">
+        1. Vào <a href="https://supabase.com" target="_blank" style="color:var(--accent)">supabase.com</a> → đăng nhập → chọn project <strong>pmr-system</strong><br>
+        2. Menu trái → <strong>Settings</strong> → <strong>API</strong><br>
+        3. Copy <strong>Project URL</strong> (dạng https://xxxxxxxx.supabase.co)<br>
+        4. Copy <strong>anon public key</strong> (chuỗi dài bắt đầu bằng eyJ...)<br>
+        5. Dán vào 2 ô bên trên → nhấn <strong>Kết nối</strong><br>
+        6. Nhấn <strong>Tạo Tables</strong> (chỉ cần làm 1 lần)<br>
+        7. Từ đó mỗi lần import file → data tự lên cloud ✓
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
@@ -1146,6 +1213,7 @@ window.onload = () => {
   updateRecipientPreview();
   initEmailSubject();
   loadEjsConfig();
+  loadSbConfig();
 };
 
 function setReportDate() {
@@ -1242,6 +1310,7 @@ function saveProjectList() {
   saveToStorage();
   populateDropdown();
   renderEmailProjList();
+  autoCloudPush('Project List');
   toast('Đã lưu Project List ✓');
 }
 
@@ -1507,6 +1576,7 @@ function importPL(wb, fname) {
   renderProjectList();
   populateDropdown();
   setStatus('pl', `✓ Đã import ${state.projects.length} dòng từ "${fname}"`, true);
+  autoCloudPush('Project List');
   toast('Import Project List thành công ✓');
 }
 
@@ -1546,6 +1616,7 @@ function importReceivable(wb, fname) {
 
   const totalRows = dataRows.filter(r => String(r[0]||'').trim()).length;
   setStatus('recv', `✓ Đã import ${totalRows} dòng / ${projectCount} dự án từ "${fname}"`, true);
+  autoCloudPush('Receivable');
   onProjectChange();
 }
 
@@ -1591,6 +1662,7 @@ function importCF(wb, fname) {
   state.importedData.cashflow = cf;
   const projectCount = Object.keys(cf).length;
   setStatus('cf', `✓ Đã import ${countRows} dòng / ${projectCount} mã dự án từ "${fname}" (${countReversed} dòng hoàn ứng đảo dấu)`, true);
+  autoCloudPush('Cash Flow');
   onProjectChange();
 }
 
@@ -1620,6 +1692,7 @@ function importRevenue(wb, fname) {
 
   const projectCount = Object.keys(rev).length;
   setStatus('rev', `✓ Đã import ${count} dòng / ${projectCount} mã dự án từ "${fname}"`, true);
+  autoCloudPush('Revenue');
   onProjectChange();
 }
 
@@ -1653,6 +1726,7 @@ function importExpense(wb, fname) {
 
   const projectCount = Object.keys(exp).length;
   setStatus('exp', `✓ Đã import ${count} dòng / ${projectCount} mã dự án từ "${fname}"`, true);
+  autoCloudPush('Expenses');
   onProjectChange();
 }
 
@@ -2131,6 +2205,168 @@ async function sendAllDirect() {
     + (failed  ? ' | Lỗi: ' + failed : '');
   setSendStatus(summary, failed === 0);
   toast(sent + ' email đã gửi' + (failed ? ', ' + failed + ' lỗi' : ' thành công!'));
+}
+
+// ═══════════════════ SUPABASE CLOUD SYNC ═══════════════════
+let sbClient = null;
+
+function saveSbConfig() {
+  const cfg = {
+    url: document.getElementById('sb-url').value.trim(),
+    key: document.getElementById('sb-key').value.trim(),
+  };
+  localStorage.setItem('pmr_sb_config', JSON.stringify(cfg));
+}
+
+function loadSbConfig() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('pmr_sb_config') || '{}');
+    if (cfg.url) document.getElementById('sb-url').value = cfg.url;
+    if (cfg.key) document.getElementById('sb-key').value = cfg.key;
+    if (cfg.url && cfg.key) initSupabase(true); // auto-connect silently
+  } catch(e) {}
+}
+
+function setSbStatus(msg, ok, warn) {
+  const el = document.getElementById('sb-status');
+  if (!el) return;
+  const color = ok ? 'var(--green)' : (warn ? 'orange' : 'var(--red)');
+  el.innerHTML = '<span style="color:' + color + '">' + msg + '</span>';
+}
+
+function initSupabase(silent) {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { if (!silent) setSbStatus('⚠ Vui lòng điền URL và Anon Key', false); return false; }
+  try {
+    sbClient = window.supabase.createClient(url, key);
+    saveSbConfig();
+    if (!silent) { setSbStatus('✓ Kết nối Supabase thành công!', true); toast('☁ Đã kết nối Supabase'); }
+    updateCloudDataInfo();
+    return true;
+  } catch(e) {
+    if (!silent) setSbStatus('✗ Lỗi: ' + e.message, false);
+    return false;
+  }
+}
+
+async function setupSupabaseTables() {
+  if (!sbClient && !initSupabase()) return;
+  setSbStatus('Đang tạo tables...', true);
+  try {
+    // Use upsert to a single "pmr_data" key-value store table
+    // Create it by inserting a test row — user needs to create table manually via Supabase dashboard
+    const { error } = await sbClient.from('pmr_data').upsert({ key: '__test__', value: '{}' }, { onConflict: 'key' });
+    if (error) {
+      // Table doesn't exist — show SQL instructions
+      setSbStatus('⚠ Table chưa tồn tại — xem hướng dẫn bên dưới', false, true);
+      document.getElementById('cloud-data-info').innerHTML =
+        '<strong>Tạo table trong Supabase SQL Editor:</strong><br>' +
+        '<code style="background:#0D1B2A;color:#E8B84B;padding:8px 12px;border-radius:4px;display:block;margin-top:6px;font-size:11px;line-height:1.8;">' +
+        'CREATE TABLE pmr_data (<br>' +
+        '&nbsp;&nbsp;key TEXT PRIMARY KEY,<br>' +
+        '&nbsp;&nbsp;value JSONB,<br>' +
+        '&nbsp;&nbsp;updated_at TIMESTAMPTZ DEFAULT NOW()<br>' +
+        ');<br><br>' +
+        'ALTER TABLE pmr_data ENABLE ROW LEVEL SECURITY;<br>' +
+        'CREATE POLICY "Allow all" ON pmr_data FOR ALL USING (true) WITH CHECK (true);' +
+        '</code><br>' +
+        'Vào Supabase → SQL Editor → paste đoạn trên → Run → quay lại nhấn "Tạo Tables" lại.';
+    } else {
+      setSbStatus('✓ Tables đã sẵn sàng!', true);
+      toast('✓ Supabase tables OK');
+      await pullFromCloud();
+    }
+  } catch(e) { setSbStatus('✗ ' + e.message, false); }
+}
+
+async function pushToCloud() {
+  if (!sbClient && !initSupabase()) return;
+  setSbStatus('Đang push lên cloud...', true);
+  try {
+    const payload = [
+      { key: 'projects',    value: state.projects,             updated_at: new Date().toISOString() },
+      { key: 'receivable',  value: state.importedData.receivable, updated_at: new Date().toISOString() },
+      { key: 'cashflow',    value: state.importedData.cashflow,   updated_at: new Date().toISOString() },
+      { key: 'revenue',     value: state.importedData.revenue,    updated_at: new Date().toISOString() },
+      { key: 'expense',     value: state.importedData.expense,    updated_at: new Date().toISOString() },
+    ];
+    const { error } = await sbClient.from('pmr_data').upsert(payload, { onConflict: 'key' });
+    if (error) throw new Error(error.message);
+    setSbStatus('✓ Đã push lên cloud thành công!', true);
+    toast('☁ Data đã lưu lên cloud');
+    updateCloudDataInfo();
+  } catch(e) { setSbStatus('✗ Push lỗi: ' + e.message, false); }
+}
+
+async function pullFromCloud() {
+  if (!sbClient && !initSupabase(true)) { setSbStatus('⚠ Chưa kết nối Supabase', false, true); return; }
+  setSbStatus('Đang pull từ cloud...', true);
+  try {
+    const { data, error } = await sbClient.from('pmr_data').select('key, value, updated_at');
+    if (error) throw new Error(error.message);
+    if (!data || !data.length) { setSbStatus('⚠ Cloud chưa có data — import file trước', false, true); return; }
+
+    data.forEach(row => {
+      if (row.key === 'projects'   && Array.isArray(row.value)) state.projects = row.value;
+      if (row.key === 'receivable') state.importedData.receivable = row.value || {};
+      if (row.key === 'cashflow')   state.importedData.cashflow   = row.value || {};
+      if (row.key === 'revenue')    state.importedData.revenue    = row.value || {};
+      if (row.key === 'expense')    state.importedData.expense    = row.value || {};
+    });
+
+    // Also save to localStorage as cache
+    saveToStorage();
+    renderProjectList();
+    populateDropdown();
+    renderEmailProjList();
+    onProjectChange();
+    setSbStatus('✓ Đã pull data từ cloud!', true);
+    toast('☁ Đã đồng bộ data từ cloud');
+    updateCloudDataInfo(data);
+  } catch(e) { setSbStatus('✗ Pull lỗi: ' + e.message, false); }
+}
+
+async function clearCloudData() {
+  if (!confirm('Xóa toàn bộ data trên cloud? Hành động này không thể hoàn tác!')) return;
+  if (!sbClient && !initSupabase()) return;
+  try {
+    const { error } = await sbClient.from('pmr_data').delete().neq('key', '__never__');
+    if (error) throw new Error(error.message);
+    toast('🗑 Đã xóa toàn bộ data cloud');
+    setSbStatus('✓ Đã xóa data cloud', true);
+    document.getElementById('cloud-data-info').innerHTML = 'Cloud trống — chưa có data.';
+  } catch(e) { setSbStatus('✗ ' + e.message, false); }
+}
+
+function updateCloudDataInfo(data) {
+  const el = document.getElementById('cloud-data-info');
+  if (!el) return;
+  if (!data) { el.innerHTML = 'Nhấn <strong>Pull data</strong> để xem thông tin.'; return; }
+  const rows = {};
+  data.forEach(r => rows[r.key] = r);
+  const fmt = key => {
+    if (!rows[key]) return '—';
+    const v = rows[key].value;
+    const count = Array.isArray(v) ? v.length : Object.keys(v||{}).length;
+    const t = new Date(rows[key].updated_at).toLocaleString('vi-VN');
+    return count + ' mục · cập nhật ' + t;
+  };
+  el.innerHTML =
+    '📋 <strong>Project List:</strong> ' + fmt('projects') + '<br>' +
+    '💰 <strong>Receivable:</strong> '   + fmt('receivable') + '<br>' +
+    '🏦 <strong>Cash Flow:</strong> '    + fmt('cashflow') + '<br>' +
+    '📈 <strong>Revenue:</strong> '      + fmt('revenue') + '<br>' +
+    '💸 <strong>Expenses:</strong> '     + fmt('expense');
+}
+
+// Auto-push to cloud after every import
+async function autoCloudPush(label) {
+  if (!sbClient) return; // skip if not connected
+  try {
+    await pushToCloud();
+    toast('☁ ' + label + ' đã lưu lên cloud');
+  } catch(e) { console.warn('Auto cloud push failed:', e.message); }
 }
 
 // ═══════════════════ TOAST ═══════════════════
