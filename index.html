@@ -683,6 +683,91 @@
   .comment-text strong { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
   .comment-empty { color: var(--muted); font-size: 12px; font-style: italic; padding: 10px 0; text-align: center; }
 
+  /* Comment item edit controls */
+  .comment-controls {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 1px;
+  }
+  .comment-ctrl-btn {
+    background: rgba(0,0,0,0.08);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 2px 7px;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.12s;
+    line-height: 1.6;
+  }
+  .comment-ctrl-btn:hover { background: rgba(0,0,0,0.16); color: var(--text); }
+  .comment-ctrl-btn.active { background: var(--navy); color: #fff; }
+  .comment-edit-area {
+    margin-top: 8px;
+    display: none;
+  }
+  .comment-edit-area.open { display: block; }
+  .comment-edit-textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.6;
+    box-sizing: border-box;
+  }
+  .comment-edit-textarea:focus { border-color: var(--accent); }
+  .comment-edit-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    justify-content: flex-end;
+  }
+  .comment-save-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .comment-save-btn:hover { background: #1e6b8a; }
+  .comment-cancel-btn {
+    background: #fff;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .comment-cancel-btn:hover { color: var(--text); }
+  /* Custom text badge on title */
+  .custom-badge {
+    font-size: 9px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+  }
+
   @media (max-width: 700px) {
     .import-grid { grid-template-columns: 1fr; }
     .pmr-meta { grid-template-columns: 1fr; }
@@ -2821,12 +2906,107 @@ function generateAssessment(proj) {
   // ── Render ──
   box.style.display = 'block';
   label.textContent = 'As of ' + today.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-  body.innerHTML = comments.map(c =>
-    `<div class="comment-item ${c.cls}">
+  // Load any saved custom comments for this project
+  const projKey = 'pmr_custom_comments_' + (document.getElementById('projectSelect')?.value || '');
+  let savedCustom = {};
+  try { savedCustom = JSON.parse(localStorage.getItem(projKey) || '{}'); } catch(e) {}
+
+  body.innerHTML = comments.map((c, idx) => {
+    const isCustom = savedCustom[idx] !== undefined;
+    const displayMsg = isCustom ? savedCustom[idx] : c.msg;
+    const displayCls = isCustom ? (c.cls + ' custom-overridden') : c.cls;
+    return `<div class="comment-item ${displayCls}" id="citem-${idx}">
       <div class="comment-icon">${c.icon}</div>
-      <div class="comment-text"><strong>${c.title}</strong>${c.msg}${c.action ? `<div style="margin-top:6px;">${c.action}</div>` : ''}</div>
-    </div>`
-  ).join('');
+      <div class="comment-text" style="flex:1;">
+        <strong>${c.title}${isCustom ? '<span class="custom-badge">Custom</span>' : ''}</strong>
+        <span class="comment-msg-text" id="cmsg-${idx}">${displayMsg}</span>
+        ${c.action && !isCustom ? `<div style="margin-top:6px;">${c.action}</div>` : ''}
+        <div class="comment-edit-area" id="cedit-${idx}">
+          <textarea class="comment-edit-textarea" id="ctextarea-${idx}" rows="3">${displayMsg}</textarea>
+          <div class="comment-edit-actions">
+            <button class="comment-cancel-btn" onclick="cancelEditComment(${idx})">Cancel</button>
+            <button class="comment-save-btn" onclick="saveCustomComment(${idx}, '${escAttr(c.cls)}')">Save</button>
+          </div>
+        </div>
+      </div>
+      <div class="comment-controls no-print">
+        <button class="comment-ctrl-btn" id="cbtn-auto-${idx}" onclick="setCommentMode(${idx},'auto')"
+          title="Use auto assessment" style="${!isCustom ? 'background:var(--navy);color:#fff;' : ''}">Auto</button>
+        <button class="comment-ctrl-btn" id="cbtn-edit-${idx}" onclick="setCommentMode(${idx},'edit')"
+          title="Write custom comment">✏ Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Store comments array for reference
+  body.dataset.commentsJson = JSON.stringify(comments.map(c => ({cls:c.cls, msg:c.msg, title:c.title, icon:c.icon})));
+  body.dataset.projKey = projKey;
+}
+
+function escAttr(s) { return (s||'').replace(/'/g, "\'"); }
+
+function setCommentMode(idx, mode) {
+  const editArea = document.getElementById('cedit-' + idx);
+  const btnAuto  = document.getElementById('cbtn-auto-' + idx);
+  const btnEdit  = document.getElementById('cbtn-edit-' + idx);
+  if (!editArea) return;
+
+  if (mode === 'edit') {
+    editArea.classList.add('open');
+    btnEdit.classList.add('active');
+    btnAuto.classList.remove('active');
+    const ta = document.getElementById('ctextarea-' + idx);
+    if (ta) ta.focus();
+  } else if (mode === 'auto') {
+    // Revert to auto: clear custom, re-render
+    const body = document.getElementById('comment-body');
+    const projKey = body?.dataset.projKey;
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(projKey) || '{}'); } catch(e) {}
+    delete saved[idx];
+    localStorage.setItem(projKey, JSON.stringify(saved));
+    refreshAssessment();
+  }
+}
+
+function cancelEditComment(idx) {
+  const editArea = document.getElementById('cedit-' + idx);
+  const btnEdit  = document.getElementById('cbtn-edit-' + idx);
+  if (editArea) editArea.classList.remove('open');
+  if (btnEdit)  btnEdit.classList.remove('active');
+}
+
+function saveCustomComment(idx, origCls) {
+  const ta = document.getElementById('ctextarea-' + idx);
+  const msgEl = document.getElementById('cmsg-' + idx);
+  const item  = document.getElementById('citem-' + idx);
+  const body  = document.getElementById('comment-body');
+  if (!ta || !msgEl) return;
+
+  const newText = ta.value.trim();
+  if (!newText) { cancelEditComment(idx); return; }
+
+  // Save to localStorage
+  const projKey = body?.dataset.projKey;
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(projKey) || '{}'); } catch(e) {}
+  saved[idx] = newText;
+  localStorage.setItem(projKey, JSON.stringify(saved));
+
+  // Update display
+  msgEl.textContent = newText;
+  cancelEditComment(idx);
+
+  // Add Custom badge if not already present
+  const titleEl = item?.querySelector('.comment-text strong');
+  if (titleEl && !titleEl.querySelector('.custom-badge')) {
+    titleEl.insertAdjacentHTML('beforeend', '<span class="custom-badge">Custom</span>');
+  }
+  // Mark auto button as inactive
+  const btnAuto = document.getElementById('cbtn-auto-' + idx);
+  if (btnAuto) btnAuto.style.cssText = '';
+
+  toast('✓ Nhận xét đã lưu');
 }
 
 
